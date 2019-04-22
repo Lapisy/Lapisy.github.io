@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Octopress | Lapisy的博客]]></title>
+  <link href="http://lapisy.github.io/blog/categories/octopress/atom.xml" rel="self"/>
+  <link href="http://lapisy.github.io/"/>
+  <updated>2019-04-22T21:42:01+08:00</updated>
+  <id>http://lapisy.github.io/</id>
+  <author>
+    <name><![CDATA[Lapisy]]></name>
+    <email><![CDATA[softgeek@163.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Octopress博客搭建与配置]]></title>
+    <link href="http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/"/>
+    <updated>2019-04-22T20:43:48+08:00</updated>
+    <id>http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
+  
+</feed>

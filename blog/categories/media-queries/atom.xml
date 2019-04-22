@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Media Queries | Lapisy的博客]]></title>
-  <link href="http://blog.lapisy.com/blog/categories/media-queries/atom.xml" rel="self"/>
-  <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-19T12:14:12+08:00</updated>
-  <id>http://blog.lapisy.com/</id>
+  <link href="http://lapisy.github.io/blog/categories/media-queries/atom.xml" rel="self"/>
+  <link href="http://lapisy.github.io/"/>
+  <updated>2019-04-22T21:42:01+08:00</updated>
+  <id>http://lapisy.github.io/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
     <email><![CDATA[softgeek@163.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Hello World]]></title>
-    <link href="http://blog.lapisy.com/blog/2019/04/19/hello-world/"/>
+    <link href="http://lapisy.github.io/blog/2019/04/19/hello-world/"/>
     <updated>2019-04-19T09:49:39+08:00</updated>
-    <id>http://blog.lapisy.com/blog/2019/04/19/hello-world</id>
+    <id>http://lapisy.github.io/blog/2019/04/19/hello-world</id>
     <content type="html"><![CDATA[<h1>欢迎使用 Cmd Markdown 编辑阅读器</h1>
 
 <hr />

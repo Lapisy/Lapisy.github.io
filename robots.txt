@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: http://blog.lapisy.com/sitemap.xml 
+Sitemap: http://lapisy.github.io/sitemap.xml 

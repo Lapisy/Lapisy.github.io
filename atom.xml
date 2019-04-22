@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Lapisy的博客]]></title>
-  <link href="http://blog.lapisy.com/atom.xml" rel="self"/>
-  <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-19T12:14:12+08:00</updated>
-  <id>http://blog.lapisy.com/</id>
+  <link href="http://lapisy.github.io/atom.xml" rel="self"/>
+  <link href="http://lapisy.github.io/"/>
+  <updated>2019-04-22T21:42:01+08:00</updated>
+  <id>http://lapisy.github.io/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
     <email><![CDATA[softgeek@163.com]]></email>
@@ -14,10 +14,19 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Octopress博客搭建与配置]]></title>
+    <link href="http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/"/>
+    <updated>2019-04-22T20:43:48+08:00</updated>
+    <id>http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Hello World]]></title>
-    <link href="http://blog.lapisy.com/blog/2019/04/19/hello-world/"/>
+    <link href="http://lapisy.github.io/blog/2019/04/19/hello-world/"/>
     <updated>2019-04-19T09:49:39+08:00</updated>
-    <id>http://blog.lapisy.com/blog/2019/04/19/hello-world</id>
+    <id>http://lapisy.github.io/blog/2019/04/19/hello-world</id>
     <content type="html"><![CDATA[<h1>欢迎使用 Cmd Markdown 编辑阅读器</h1>
 
 <hr />
@@ -133,9 +142,9 @@
   
   <entry>
     <title type="html"><![CDATA[Android之文件上传原理]]></title>
-    <link href="http://blog.lapisy.com/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/"/>
+    <link href="http://lapisy.github.io/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/"/>
     <updated>2017-06-25T10:43:22+08:00</updated>
-    <id>http://blog.lapisy.com/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li</id>
+    <id>http://lapisy.github.io/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li</id>
     <content type="html"><![CDATA[<h4>基本原理</h4>
 
 <p>我们知道，在浏览器中，我们上传文件时，是这样的（jsp）实现：</p>
