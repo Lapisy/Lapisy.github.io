@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Android | Lapisy的博客]]></title>
+  <link href="http://blog.lapisy.com/blog/categories/android/atom.xml" rel="self"/>
+  <link href="http://blog.lapisy.com/"/>
+  <updated>2019-04-19T12:14:12+08:00</updated>
+  <id>http://blog.lapisy.com/</id>
+  <author>
+    <name><![CDATA[Lapisy]]></name>
+    <email><![CDATA[softgeek@163.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android之文件上传原理]]></title>
+    <link href="http://blog.lapisy.com/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/"/>
+    <updated>2017-06-25T10:43:22+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li</id>
+    <content type="html"><![CDATA[<h4>基本原理</h4>
+
+<p>我们知道，在浏览器中，我们上传文件时，是这样的（jsp）实现：
+<code>java
+ &lt;form action="/blog/upload" method="post" enctype="multipart/form-data"&gt;
+    &lt;input type="text" name="token"&gt;&lt;br/&gt;
+    &lt;input type="file" name="uploadFile"&gt;
+    &lt;input type="submit" value="Upload File"&gt;
+  &lt;/form&gt;
+</code>
+我们需要指定表单的方法类型，这里一般是<code>post</code>,<code>enctype</code> 属性规定在发送到服务器之前应该如何对表单数据进行编码，一般有如下几种：
+- <strong>application/x-www-form-urlencoded</strong>：在发送前编码所有字符（默认）
+- <strong>multipart/form-data</strong>: 不对字符编码。在使用包含文件上传控件的表单时，必须使用该值。
+- <strong>text/plain</strong>:   空格转换为 &ldquo;+&rdquo; 加号，但不对特殊字符编码。</p>
+
+<!--more-->
+
+
+<p>当点击上传时，可以打开浏览器的网络调试，查看请求体中的数据如下：</p>
+
+<pre><code class="java">------WebKitFormBoundaryT1HoybnYeFOGFlBR
+Content-Disposition: form-data; name="token"
+
+xjjdke2m5hkjk3j3k43
+------WebKitFormBoundaryT1HoybnYeFOGFlBR
+Content-Disposition: form-data; name="file"; filename="ss.jpg"
+Content-Type: image/jpeg
+
+....jpg的二进制数据...
+------WebKitFormBoundaryT1HoybnYeFOGFlBR--
+</code></pre>
+
+<p>从请求中的数据可以看出，请求体中，把所有的数据封装起来，使用<code>------WebKitFormBoundaryT1HoybnYeFOGFlBR</code>来进行隔开，不同类型，一些指定的参数也不一样：
+- 如果是简单的键值对，需要指定<code>Content-Disposition</code>也就是内容的描述，同时指定名字和值，也即是<code>name</code>的值以及与其对应的值（这里是token的值）
+- 如果是文件的话，不仅要指定内容的描述，name值，还要指定文件的名称<code>filename</code>，内容的类型（如这里传的图片类型），图片的二进制数据</p>
+
+<p>浏览器把这些数据封装到固定的格式后，发送给服务端，而服务端在接受到请求之后，会以这个<code>Boundary</code>的值来分割获取传送过来的值，从而进行处理。</p>
+
+<h4>Android如何来上传文件(不用框架)</h4>
+
+<p>我们知道Android开发时，不像浏览器，会自动的组装这些数据，那么我们在不使用现成的网络请求框架的情况下，如何上传数据呢？
+答案很明晰那里 ，只要我们模仿浏览器的行为，人为的把这些数据封装成跟浏览器的一样，放到请求体中，不就可以正常上传了。不多说~~，直接上[<a href="http://blog.csdn.net/lisdye2/article/details/52222645">lisdye2的使用的代码</a>]例子：
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">/&lt;</span><span class="n">em</span><span class="o">&gt;*</span>
+</span><span class='line'> <span class="o">*</span> <span class="n">文件表单上传</span>
+</span><span class='line'> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;/</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileUpLoadTest</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="c1">// 分割符</span>
+</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">BOUNDARY</span> <span class="o">=</span> <span class="s">&quot;----WebKitFormBoundaryT1HoybnYeFOGFlBR&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * HttpUrlConnection　实现文件上传</span>
+</span><span class='line'><span class="cm"> * @param params 普通参数</span>
+</span><span class='line'><span class="cm"> * @param fileFormName 文件在表单中的键</span>
+</span><span class='line'><span class="cm"> * @param uploadFile 上传的文件</span>
+</span><span class='line'><span class="cm"> * @param newFileName 文件在表单中的值（服务端获取到的文件名）</span>
+</span><span class='line'><span class="cm"> * @param urlStr url</span>
+</span><span class='line'><span class="cm"> * @throws IOException</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">uploadForm</span><span class="o">(</span><span class="n">Map</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">params</span><span class="o">,</span> <span class="n">String</span> <span class="n">fileFormName</span><span class="o">,</span> <span class="n">File</span> <span class="n">uploadFile</span><span class="o">,</span> <span class="n">String</span> <span class="n">newFileName</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">String</span> <span class="n">urlStr</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">newFileName</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">newFileName</span><span class="o">.</span><span class="na">trim</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;&quot;</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">newFileName</span> <span class="o">=</span> <span class="n">uploadFile</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="c1">//开始拼接数据</span>
+</span><span class='line'>    <span class="n">StringBuilder</span> <span class="n">sb</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="o">();</span>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * 普通的表单数据</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">params</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">key</span> <span class="o">:</span> <span class="n">params</span><span class="o">.</span><span class="na">keySet</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;--&quot;</span> <span class="o">+</span> <span class="n">BOUNDARY</span> <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;Content-Disposition: form-data; name=\&quot;&quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot;\&quot;&quot;</span> <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">params</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * 上传文件的头</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;--&quot;</span> <span class="o">+</span> <span class="n">BOUNDARY</span> <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;Content-Disposition: form-data; name=\&quot;&quot;</span> <span class="o">+</span> <span class="n">fileFormName</span> <span class="o">+</span> <span class="s">&quot;\&quot;; filename=\&quot;&quot;</span> <span class="o">+</span> <span class="n">newFileName</span> <span class="o">+</span> <span class="s">&quot;\&quot;&quot;</span>
+</span><span class='line'>            <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;Content-Type: image/jpeg&quot;</span> <span class="o">+</span> <span class="s">&quot;\r\n&quot;</span><span class="o">);</span><span class="c1">// 如果服务器端有文件类型的校验，必须明确指定ContentType</span>
+</span><span class='line'>    <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;\r\n&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">headerInfo</span> <span class="o">=</span> <span class="n">sb</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">endInfo</span> <span class="o">=</span> <span class="o">(</span><span class="s">&quot;\r\n--&quot;</span> <span class="o">+</span> <span class="n">BOUNDARY</span> <span class="o">+</span> <span class="s">&quot;--\r\n&quot;</span><span class="o">).</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">URL</span> <span class="n">url</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">URL</span><span class="o">(</span><span class="n">urlStr</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">HttpURLConnection</span> <span class="n">conn</span> <span class="o">=</span> <span class="o">(</span><span class="n">HttpURLConnection</span><span class="o">)</span> <span class="n">url</span><span class="o">.</span><span class="na">openConnection</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">conn</span><span class="o">.</span><span class="na">setRequestMethod</span><span class="o">(</span><span class="s">&quot;POST&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// 设置传输内容的格式，以及长度</span>
+</span><span class='line'>    <span class="n">conn</span><span class="o">.</span><span class="na">setRequestProperty</span><span class="o">(</span><span class="s">&quot;Content-Type&quot;</span><span class="o">,</span> <span class="s">&quot;multipart/form-data; boundary=&quot;</span> <span class="o">+</span> <span class="n">BOUNDARY</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">conn</span><span class="o">.</span><span class="na">setRequestProperty</span><span class="o">(</span><span class="s">&quot;Content-Length&quot;</span><span class="o">,</span>
+</span><span class='line'>            <span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">headerInfo</span><span class="o">.</span><span class="na">length</span> <span class="o">+</span> <span class="n">uploadFile</span><span class="o">.</span><span class="na">length</span><span class="o">()</span> <span class="o">+</span> <span class="n">endInfo</span><span class="o">.</span><span class="na">length</span><span class="o">));</span>
+</span><span class='line'>    <span class="n">conn</span><span class="o">.</span><span class="na">setDoOutput</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">OutputStream</span> <span class="n">out</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">InputStream</span> <span class="n">in</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FileInputStream</span><span class="o">(</span><span class="n">uploadFile</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// 写入头部 （包含了普通的参数，以及文件的标示等）</span>
+</span><span class='line'>    <span class="n">out</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">headerInfo</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// 写入文件</span>
+</span><span class='line'>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">1024</span><span class="o">];</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">len</span><span class="o">;</span>
+</span><span class='line'>    <span class="k">while</span> <span class="o">((</span><span class="n">len</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">out</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="c1">// 写入尾部</span>
+</span><span class='line'>    <span class="n">out</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">endInfo</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">in</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">out</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">conn</span><span class="o">.</span><span class="na">getResponseCode</span><span class="o">()</span> <span class="o">==</span> <span class="mi">200</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;文件上传成功&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">//上传的文件</span>
+</span><span class='line'>    <span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="s">&quot;ss.png&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// 普通参数</span>
+</span><span class='line'>    <span class="n">HashMap</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span> <span class="o">,</span> <span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">params</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;&amp;</span><span class="n">gt</span><span class="o">;();</span>
+</span><span class='line'>    <span class="n">params</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;user&quot;</span><span class="o">,</span> <span class="s">&quot;admin&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">uploadForm</span><span class="o">(</span><span class="n">params</span><span class="o">,</span> <span class="s">&quot;file&quot;</span><span class="o">,</span> <span class="n">file</span><span class="o">,</span> <span class="s">&quot;ss.jpg&quot;</span><span class="o">,</span> <span class="s">&quot;http://localhost:8080/Web/UploadFile&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure>
+上面的代码还是比较简单的，相信大部分人，都能够看懂。其基本的原理就是按照顺序，不断的把数据拼接成服务器能够识别的格式也就是上面讲的格式，然后传递给服务端，让其解析处理即可。</p>
+
+<blockquote><p>总结思考：如果自己想封装一个上传的框架或者工具类，一般会做哪些工作呢？
+<strong>从上面例子我们可以看到，上传的数据一般分为：键值对和文件两类，如果封装成一个框架，只需要把外面要传入的键值对即键值对的<code>name</code>和<code>value</code>对外暴露。如果是文件，那只要指定文件的路径，文件的名称(<code>filename</code>)，文件的类型(<code>Content-type</code>)，而我们把拼接流程和请求的流程封装起来，不就完成了封装了吗~~</strong></p></blockquote>
+
+<p>如果想知道框架是怎么上传文件的，可以看下[<a href="http://shiyiliang.cn/2017/06/25/Retrofit%E5%AD%A6%E4%B9%A0%E4%B9%8B%E6%96%87%E4%BB%B6%E5%92%8C%E5%8F%82%E6%95%B0%E4%B8%8A%E4%BC%A0/">Retrofit学习之文件上传</a>]</p>
+]]></content>
+  </entry>
+  
+</feed>
