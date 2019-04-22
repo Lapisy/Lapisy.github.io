@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Lapisy的博客]]></title>
   <link href="http://lapisy.github.io/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://lapisy.github.io/"/>
-  <updated>2019-04-22T21:42:01+08:00</updated>
+  <updated>2019-04-22T21:50:36+08:00</updated>
   <id>http://lapisy.github.io/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -18,7 +18,60 @@
     <link href="http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/"/>
     <updated>2019-04-22T20:43:48+08:00</updated>
     <id>http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi</id>
-    <content type="html"><![CDATA[
+    <content type="html"><![CDATA[<h4>Octopress安装下载</h4>
+
+<p>前期准备：<a href="http://octopress.org/docs/setup/">http://octopress.org/docs/setup/</a></p>
+
+<blockquote><p>注意：<code>bundle install</code>这必须到octopress源码里面去执行，否则会报错</p></blockquote>
+
+<p>基础配置：<a href="http://octopress.org/docs/configuring/">http://octopress.org/docs/configuring/</a></p>
+
+<h4>注意事项</h4>
+
+<ul>
+<li>需要去掉twitter的所有</li>
+<li>去掉所有包含googleapis.com的连接</li>
+</ul>
+
+
+<!--more-->
+
+
+<h4>配置Github</h4>
+
+<ol>
+<li>配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥</li>
+<li>然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中</li>
+<li>使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</li>
+</ol>
+
+
+<pre><code>hi xxx! You’ve successfully authenticated, bug GitHub does not povide shell access
+</code></pre>
+
+<ol>
+<li>登录 Github 后，新建repository。项目名称（Repository name）命名格式为 <code>username.github.io</code> ，username 是你的 Github 用户名。例如我的用户名是 Lapisy，所以输入 Lapisy.github.io 即可。点击 Create repository 创建。</li>
+<li>绑定本地的博客代码和github</li>
+</ol>
+
+
+<pre><code>$ cd octopress
+$ rake setup_github_pages
+</code></pre>
+
+<p>提示输入repository的链接，你可以直接复制github中该repository的连接地址即可，例如我这里的是<code>https://github.com/Lapisy/Lapisy.github.io</code>
+6. 现在可以上传代码了</p>
+
+<pre><code>rake deploy
+</code></pre>
+
+<p>参考文章：<br/>
+<a href="https://www.jianshu.com/p/1a117ef0e534">https://www.jianshu.com/p/1a117ef0e534</a><br/>
+<a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">第三方主题</a><br/>
+<a href="https://www.jianshu.com/p/0ac2ac1a8e45">category配置</a><br>
+<a href="https://www.jianshu.com/p/fe0e089a985c">https://www.jianshu.com/p/fe0e089a985c</a></p>
+
+<p><img src="images/post/test.png" alt="测试图片" /></p>
 ]]></content>
   </entry>
   
