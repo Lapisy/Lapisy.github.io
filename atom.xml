@@ -4,7 +4,7 @@
   <title><![CDATA[Lapisy的博客]]></title>
   <link href="http://lapisy.github.io/atom.xml" rel="self"/>
   <link href="http://lapisy.github.io/"/>
-  <updated>2019-04-22T21:50:36+08:00</updated>
+  <updated>2019-04-22T21:57:25+08:00</updated>
   <id>http://lapisy.github.io/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -75,7 +75,7 @@
 <a href="https://www.jianshu.com/p/0ac2ac1a8e45">category配置</a><br>
 <a href="https://www.jianshu.com/p/fe0e089a985c">https://www.jianshu.com/p/fe0e089a985c</a></p>
 
-<p><img src="images/post/test.png" alt="测试图片" /></p>
+<p><img src="http://lapisy.github.io/images/test.png" alt="测试图片" /></p>
 ]]></content>
   </entry>
   
