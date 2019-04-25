@@ -9,7 +9,7 @@
   <meta name="author" content="Lapisy">
 
   
-  <meta name="description" content="Octopress安装下载 前期准备：http://octopress.org/docs/setup/ 注意：bundle install这必须到octopress源码里面去执行，否则会报错 基础配置：http://octopress.org/docs/configuring/ 注意事项 &hellip;">
+  <meta name="description" content="一：Octopress安装下载 前期准备：http://octopress.org/docs/setup/ 注意：bundle install这必须到octopress源码里面去执行，否则会报错 基础配置：http://octopress.org/docs/configuring/ 注意事项 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/">
+  <link rel="canonical" href="http://blog.lapisy.com/blog/2019/04/20/octopressbo-ke-da-jian-yu-pei-zhi/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Lapisy的博客" type="application/atom+xml">
@@ -44,21 +44,24 @@
 </hgroup>
 
 </header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <nav role="navigation"><ul class="subscription" data-subscription="rss email">
   <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+    <li><a href="laisy的博客邮箱" rel="subscribe-email" title="subscribe via email">Email</a></li>
   
 </ul>
   
 <form action="https://www.google.com/search" method="get">
   <fieldset role="search">
-    <input type="hidden" name="sitesearch" value="lapisy.github.io">
+    <input type="hidden" name="sitesearch" value="blog.lapisy.com">
     <input class="search" type="text" name="q" results="0" placeholder="Search"/>
   </fieldset>
 </form>
   
 <ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/">首页</a></li>
+  <li><a href="/blog/archives">归档</a></li>
+  <!-- <li><a href="/about">关于</a></li> -->
 </ul>
 
 </nav>
@@ -78,14 +81,14 @@
 
 
 
-<time class='entry-date' datetime='2019-04-22T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
+<time class='entry-date' datetime='2019-04-20T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><h4>Octopress安装下载</h4>
+<div class="entry-content"><h4>一：Octopress安装下载</h4>
 
 <p>前期准备：<a href="http://octopress.org/docs/setup/">http://octopress.org/docs/setup/</a></p>
 
@@ -104,14 +107,11 @@
 <!--more-->
 
 
-<h4>配置Github</h4>
+<h4>二：配置Github</h4>
 
-<ol>
-<li>配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥</li>
-<li>然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中</li>
-<li>使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</li>
-</ol>
-
+<p>1.配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥<br/>
+2.然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中<br/>
+3.使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>hi xxx! You’ve successfully authenticated, bug GitHub does not povide shell access</span></code></pre></td></tr></table></div></figure>
@@ -136,9 +136,33 @@
 </ol>
 
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake deploy</span></code></pre></td></tr></table></div></figure>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">rake</span> <span class="n">deploy</span>
+</span></code></pre></td></tr></table></div></figure>
 
+
+<h4>三：添加导航栏</h4>
+
+<ol>
+<li>使用如下的命令创建页面,会在创建<code>source\名字\index.markdown</code>文件</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">rake</span> <span class="n">new_page</span><span class="o">[</span><span class="s1">&#39;名字&#39;</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>在<code>source\_includes\custom\navigation.html</code>中添加连接</li>
+</ol>
+
+
+<h3>四：常用的命令</h3>
+
+<p>1.<code>rake new_post["文章名字"]</code></p>
+
+<blockquote><p><a href="http://octopress.org/docs/blogging/">Octopress创建文章的配置</a></p></blockquote>
 
 <p>参考文章：<br/>
 <a href="https://www.jianshu.com/p/1a117ef0e534">https://www.jianshu.com/p/1a117ef0e534</a><br/>
@@ -146,7 +170,8 @@
 <a href="https://www.jianshu.com/p/0ac2ac1a8e45">category配置</a><br>
 <a href="https://www.jianshu.com/p/fe0e089a985c">https://www.jianshu.com/p/fe0e089a985c</a></p>
 
-<p><img src="/images/test.png" alt="测试图片" /></p>
+<!-- ![测试图片](/images/test.png) -->
+
 </div>
 
 
@@ -162,7 +187,7 @@
 
 
 
-<time class='entry-date' datetime='2019-04-22T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
+<time class='entry-date' datetime='2019-04-20T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
       
 
 <span class="categories">
@@ -183,8 +208,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/" title="Previous Post: Android之文件上传原理">&laquo; Android之文件上传原理</a>
       
+        <a class="basic-alignment right" href="/blog/2019/04/21/androidzhi-wen-jian-shang-chuan-yuan-li/" title="Next Post: Android之文件上传原理">Android之文件上传原理 &raquo;</a>
       
     </p>
   </footer>
@@ -199,23 +224,23 @@
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/">Octopress博客搭建与配置</a>
+        <a href="/blog/2019/04/23/androidxi-tong-zhi-watchdogxue-xi-jie-xi/">Android系统之Watchdog学习解析</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/">Android之文件上传原理</a>
+        <a href="/blog/2019/04/21/androidzhi-wen-jian-shang-chuan-yuan-li/">Android之文件上传原理</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2019/04/20/octopressbo-ke-da-jian-yu-pei-zhi/">Octopress博客搭建与配置</a>
       </li>
     
   </ul>
 </section>
 <section>
     <h1>Categories</h1>
-      <ul id="category-list"><li><a href='/blog/categories/android/'>android (1)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
-  </section><section>
-  <h1>About Me</h1>
-  <p>A little something about me.</p>
-</section>
-
+      <ul id="category-list"><li><a href='/blog/categories/android/'>android (2)</a></li><li><a href='/blog/categories/framework/'>framework (1)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
+  </section>
 
 
 

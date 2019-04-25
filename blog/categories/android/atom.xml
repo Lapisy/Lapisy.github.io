@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Android | Lapisy的博客]]></title>
-  <link href="http://lapisy.github.io/blog/categories/android/atom.xml" rel="self"/>
-  <link href="http://lapisy.github.io/"/>
-  <updated>2019-04-22T22:15:24+08:00</updated>
-  <id>http://lapisy.github.io/</id>
+  <link href="http://blog.lapisy.com/blog/categories/android/atom.xml" rel="self"/>
+  <link href="http://blog.lapisy.com/"/>
+  <updated>2019-04-25T17:59:11+08:00</updated>
+  <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
     <email><![CDATA[softgeek@163.com]]></email>
@@ -14,10 +14,517 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Android系统之Watchdog学习解析]]></title>
+    <link href="http://blog.lapisy.com/blog/2019/04/23/androidxi-tong-zhi-watchdogxue-xi-jie-xi/"/>
+    <updated>2019-04-23T22:56:45+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/04/23/androidxi-tong-zhi-watchdogxue-xi-jie-xi</id>
+    <content type="html"><![CDATA[<h3>一：概述</h3>
+
+<p>Watchdog 顾名思义，看门狗，是一个很重要的机制，其目的是监测系统或者硬件的运行的情况，一旦出现锁死，死机的情况，能及时重启机器（取决于每种实现的设置策略），并收集dump crash日志.</p>
+
+<p>一般情况下有硬件层的Watchdog，也有软件层的Watchdog，例如Linux内核watchdog。但是无论其实现怎么样，但其基本思路包括：</p>
+
+<p>1.假定某一个对象的状态能表征系统运行是否健康（比如interrupt的次数，比如/dev/watchdog的时间戳）;</p>
+
+<p>2.启动一个watchdog程序，定期（通过内部或者外部时钟触发）来观测这个对象，来判定系统是否健康，并采取相应动作。</p>
+
+<h3>二：Android系统中的Watchdog机制</h3>
+
+<p>Android设计了一个软件层面Watchdog，用于保护一些重要的系统服务，当出现故障时，通常会让Android系统重启。由于这种机制的存在，就经常会出现一些system_server进程被Watchdog杀掉而发生手机重启的问题。</p>
+
+<p>所以在Android的Watchdog机制中，我需要弄明白几个问题：</p>
+
+<p>1.Watchdog监视什么？</p>
+
+<p>2.Watchdog如何监视的，也就是判断的条件？</p>
+
+<p>3.Watchdog监视的条件出现问题时，会进行那些操作？</p>
+
+<!--more-->
+
+
+<h4>2.1 Watchdog初始化</h4>
+
+<p>Android中的Watchdog是单例的线程，他在SystemServer初始化的时候启动，并初始化，如下：</p>
+
+<pre><code class="java">traceBeginAndSlog("InitWatchdog");
+final Watchdog watchdog = Watchdog.getInstance();
+watchdog.init(context, mActivityManagerService);
+traceEnd();
+</code></pre>
+
+<p>这段代码的主要原理就是获取Watchdog对象，并调用他的<code>init</code>方法，初始化。我们来看Watchdog的构造函数</p>
+
+<pre><code class="java">    private Watchdog() {
+        super("watchdog");
+        mMonitorChecker = new HandlerChecker(FgThread.getHandler(),
+                "foreground thread", DEFAULT_TIMEOUT);
+        mHandlerCheckers.add(mMonitorChecker);
+        // Add checker for main thread.  We only do a quick check since there
+        // can be UI running on the thread.
+        mHandlerCheckers.add(new HandlerChecker(new Handler(Looper.getMainLooper()),
+                "main thread", DEFAULT_TIMEOUT));
+        // Add checker for shared UI thread.
+        mHandlerCheckers.add(new HandlerChecker(UiThread.getHandler(),
+                "ui thread", DEFAULT_TIMEOUT));
+        // And also check IO thread.
+        mHandlerCheckers.add(new HandlerChecker(IoThread.getHandler(),
+                "i/o thread", DEFAULT_TIMEOUT));
+        // And the display thread.
+        mHandlerCheckers.add(new HandlerChecker(DisplayThread.getHandler(),
+                "display thread", DEFAULT_TIMEOUT));
+
+        // Initialize monitor for Binder threads.
+        addMonitor(new BinderThreadMonitor());
+
+        mOpenFdMonitor = OpenFdMonitor.create();
+
+        // See the notes on DEFAULT_TIMEOUT.
+        assert DB ||
+                DEFAULT_TIMEOUT &gt; ZygoteConnectionConstants.WRAPPED_PID_TIMEOUT_MILLIS;
+    }
+</code></pre>
+
+<p>从这个构造函数中可以看到：Watchdog里面创建了很多的HandlerChecker对象，来监视不同的对象，主要分为两大类：</p>
+
+<ul>
+<li>Monitor Checker：这个主要是监测那些实现了Monitor接口的对象，主要是监测锁相关的异常，如死锁</li>
+<li>Looper Checker：这个主要监测对应线程中的Loop是否阻塞，从构造函数中，我们可以看到主要监测了IO线程，Main线程，AMS等类</li>
+</ul>
+
+
+<h4>2.2 添加Watchdog监视对象</h4>
+
+<p>Watchdog提供了两种接口来添加监视对象，如下：</p>
+
+<pre><code class="java">public void addMonitor(Monitor monitor) {
+        synchronized (this) {
+            if (isAlive()) {
+                throw new RuntimeException("Monitors can't be added once the Watchdog is running");
+            }
+            mMonitorChecker.addMonitor(monitor);
+        }
+    }
+
+    public void addThread(Handler thread) {
+        addThread(thread, DEFAULT_TIMEOUT);
+    }
+
+
+public void addThread(Handler thread, long timeoutMillis) {
+        synchronized (this) {
+            if (isAlive()) {
+                throw new RuntimeException("Threads can't be added once the Watchdog is running");
+            }
+            final String name = thread.getLooper().getThread().getName();
+            mHandlerCheckers.add(new HandlerChecker(thread, name, timeoutMillis));
+        }
+    }
+</code></pre>
+
+<p>1.一种是通过<code>addMonitor</code>方法来添加Monitor对象，主要是添加到mMonitorChecker中一个Monitor的集合中</p>
+
+<p>2.一种是通过<code>addThread</code>方法来添加Looper是否阻塞，主要是添加到mHandlerCheckers这个列表中</p>
+
+<p>不管通过哪种方式添加，都是构造出了一个HandlerChecker对象，这是一个实现了Runnable接口的类，这个后面再详细讲。</p>
+
+<p>那么系统一共添加了那些监测对象了，通过搜索代码，我们可以知道系统一些重要的Servcice都添加了监视，比如常见的AMS,PMS,PowerManagerService等都添加对应的监听，如下面的ASM的构造函数中：</p>
+
+<pre><code class="java">        Watchdog.getInstance().addMonitor(this);
+        Watchdog.getInstance().addThread(mHandler);
+</code></pre>
+
+<h4>2.3 Watchdog的启动和监测</h4>
+
+<p>我们知道Watchdog是一个线程，那么他是在哪里启动的呢？他是在ActivityManagerService准备好之后的回调里面执行的，调用了start方法。</p>
+
+<pre><code class="java">        mActivityManagerService.systemReady(() -&gt; {     
+            ......
+                        traceBeginAndSlog("StartWatchdog");
+            Watchdog.getInstance().start();
+            traceEnd();
+            ......
+        }
+</code></pre>
+
+<p>启动线程后，会执行Watchdog的run方法，我来看看他的run方法是怎么去监视和处理的</p>
+
+<pre><code class="java">    @Override
+    public void run() {
+        boolean waitedHalf = false;
+      //这里是一个死循环，不断的监测
+        while (true) {
+            final List&lt;HandlerChecker&gt; blockedCheckers;
+            final String subject;
+            final boolean allowRestart;
+            int debuggerWasConnected = 0;
+            synchronized (this) {
+              //每次检查的间隔时间，默认是30s
+                long timeout = CHECK_INTERVAL;
+              //开始遍历所有的HandlerChecker对象，开始检测Looper
+              //注释4
+                for (int i=0; i&lt;mHandlerCheckers.size(); i++) {
+                    HandlerChecker hc = mHandlerCheckers.get(i);
+                    hc.scheduleCheckLocked();
+                }
+
+                if (debuggerWasConnected &gt; 0) {
+                    debuggerWasConnected--;
+                }
+
+                // NOTE: We use uptimeMillis() here because we do not want to increment the time we
+                // wait while asleep. If the device is asleep then the thing that we are waiting
+                // to timeout on is asleep as well and won't have a chance to run, causing a false
+                // positive on when to kill things.
+              //这个地方就是暂停30s
+                long start = SystemClock.uptimeMillis();
+                while (timeout &gt; 0) {
+                    if (Debug.isDebuggerConnected()) {
+                        debuggerWasConnected = 2;
+                    }
+                    try {
+                        wait(timeout);
+                    } catch (InterruptedException e) {
+                        Log.wtf(TAG, e);
+                    }
+                    if (Debug.isDebuggerConnected()) {
+                        debuggerWasConnected = 2;
+                    }
+                    timeout = CHECK_INTERVAL - (SystemClock.uptimeMillis() - start);
+                }
+
+                boolean fdLimitTriggered = false;
+                if (mOpenFdMonitor != null) {
+                    fdLimitTriggered = mOpenFdMonitor.monitor();
+                }
+
+                if (!fdLimitTriggered) {
+                  //注释1
+                    final int waitState = evaluateCheckerCompletionLocked();
+                  //注释2
+                    if (waitState == COMPLETED) {
+                        // The monitors have returned; reset
+                        waitedHalf = false;
+                        continue;
+                    } else if (waitState == WAITING) {
+                        // still waiting but within their configured intervals; back off and recheck
+                        continue;
+                    } else if (waitState == WAITED_HALF) {
+                        if (!waitedHalf) {
+                            // We've waited half the deadlock-detection interval.  Pull a stack
+                            // trace and wait another half.
+                            ArrayList&lt;Integer&gt; pids = new ArrayList&lt;Integer&gt;();
+                            pids.add(Process.myPid());
+                            ActivityManagerService.dumpStackTraces(true, pids, null, null,
+                                getInterestingNativePids());
+                            waitedHalf = true;
+                        }
+                        continue;
+                    }
+
+                  //注释3
+                    blockedCheckers = getBlockedCheckersLocked();
+                    subject = describeCheckersLocked(blockedCheckers);
+                } else {
+                    blockedCheckers = Collections.emptyList();
+                    subject = "Open FD high water mark reached";
+                }
+                allowRestart = mAllowRestart;
+            }
+
+            // If we got here, that means that the system is most likely hung.
+            // First collect stack traces from all threads of the system process.
+            // Then kill this process so that the system will restart.
+          //注释4
+            EventLog.writeEvent(EventLogTags.WATCHDOG, subject);
+
+            ArrayList&lt;Integer&gt; pids = new ArrayList&lt;&gt;();
+            pids.add(Process.myPid());
+            if (mPhonePid &gt; 0) pids.add(mPhonePid);
+            // Pass !waitedHalf so that just in case we somehow wind up here without having
+            // dumped the halfway stacks, we properly re-initialize the trace file.
+            final File stack = ActivityManagerService.dumpStackTraces(
+                    !waitedHalf, pids, null, null, getInterestingNativePids());
+
+            // Give some extra time to make sure the stack traces get written.
+            // The system's been hanging for a minute, another second or two won't hurt much.
+            SystemClock.sleep(2000);
+
+            // Trigger the kernel to dump all blocked threads, and backtraces on all CPUs to the kernel log
+            doSysRq('w');
+            doSysRq('l');
+
+            // Try to add the error to the dropbox, but assuming that the ActivityManager
+            // itself may be deadlocked.  (which has happened, causing this statement to
+            // deadlock and the watchdog as a whole to be ineffective)
+            Thread dropboxThread = new Thread("watchdogWriteToDropbox") {
+                    public void run() {
+                        mActivity.addErrorToDropBox(
+                                "watchdog", null, "system_server", null, null,
+                                subject, null, stack, null);
+                    }
+                };
+            dropboxThread.start();
+            try {
+                dropboxThread.join(2000);  // wait up to 2 seconds for it to return.
+            } catch (InterruptedException ignored) {}
+
+            IActivityController controller;
+            synchronized (this) {
+                controller = mController;
+            }
+            if (controller != null) {
+                Slog.i(TAG, "Reporting stuck state to activity controller");
+                try {
+                    Binder.setDumpDisabled("Service dumps disabled due to hung system process.");
+                    // 1 = keep waiting, -1 = kill system
+                    int res = controller.systemNotResponding(subject);
+                    if (res &gt;= 0) {
+                        Slog.i(TAG, "Activity controller requested to coninue to wait");
+                        waitedHalf = false;
+                        continue;
+                    }
+                } catch (RemoteException e) {
+                }
+            }
+
+            // Only kill the process if the debugger is not attached.
+            if (Debug.isDebuggerConnected()) {
+                debuggerWasConnected = 2;
+            }
+            if (debuggerWasConnected &gt;= 2) {
+                Slog.w(TAG, "Debugger connected: Watchdog is *not* killing the system process");
+            } else if (debuggerWasConnected &gt; 0) {
+                Slog.w(TAG, "Debugger was connected: Watchdog is *not* killing the system process");
+            } else if (!allowRestart) {
+                Slog.w(TAG, "Restart not allowed: Watchdog is *not* killing the system process");
+            } else {
+                Slog.w(TAG, "*** WATCHDOG KILLING SYSTEM PROCESS: " + subject);
+                WatchdogDiagnostics.diagnoseCheckers(blockedCheckers);
+                Slog.w(TAG, "*** GOODBYE!");
+                Process.killProcess(Process.myPid());
+                System.exit(10);
+            }
+
+            waitedHalf = false;
+        }
+    }
+</code></pre>
+
+<p>这是run的整个实现，我们一一来看看一些重点的代码：</p>
+
+<p>&#8194; 1. 注释1：在上面等待了固定的时间后，会调用<code>evaluateCheckerCompletionLocked</code>方法去监测各个对象的状态</p>
+
+<p>&#8194;2. 注释2：根据返回的状态，来决定是否继续往下走，还是重复检查，这里涉及三个状态</p>
+
+<p>&#8195;<code>COMPLETED</code>：正常运行，没有阻塞，默认值为0</p>
+
+<p>&#8195;<code>WAITING</code>：如果等待的时间小于最大等待时间的一半时，返回这个值，默认为1</p>
+
+<p>&#8195;<code>WAITED_HALF</code>：如果等待的时间大于最大时间的一半，同时小于最大时间，则返回这个值，默认为2</p>
+
+<p>&#8195;<code>OVERDUE</code>：超过最大的等待时间</p>
+
+<p>具体的可以看<code>getCompletionStateLocked</code>方法对状态的一个判断：</p>
+
+<pre><code class="java">        public int getCompletionStateLocked() {
+            if (mCompleted) {
+                return COMPLETED;
+            } else {
+                long latency = SystemClock.uptimeMillis() - mStartTime;
+                if (latency &lt; mWaitMax/2) {
+                    return WAITING;
+                } else if (latency &lt; mWaitMax) {
+                    return WAITED_HALF;
+                }
+            }
+            return OVERDUE;
+        }
+</code></pre>
+
+<p>&#8194;3. 注释3：得到具体的阻塞对象的一些信息</p>
+
+<p>&#8194;4. 注释4：一开始会去调用所有HandlerChecker类的<code>scheduleCheckLocked</code>方法，表示开始去执行检查的代码，而这里的HandlerChecker这个类，是一个实现了Runnable接口的对象，我们先看<code>scheduleCheckLocked</code>方法</p>
+
+<pre><code class="java">        public void scheduleCheckLocked() {
+          //监测Looper对应的queue是否空心啊，如果是的话，直接返回，继续检查
+            if (mMonitors.size() == 0 &amp;&amp; mHandler.getLooper().getQueue().isPolling()) {
+                mCompleted = true;
+                return;
+            }
+
+            if (!mCompleted) {
+                // we already have a check in flight, so no need
+                return;
+            }
+
+            mCompleted = false;
+            mCurrentMonitor = null;
+            mStartTime = SystemClock.uptimeMillis();
+            mHandler.postAtFrontOfQueue(this);
+        }
+</code></pre>
+
+<p>这个方法的主要功能是：</p>
+
+<p>&#8194;1. 通过<code>mHandler.getLooper().getQueue().isPolling()</code>判断队列是否在轮询中，如果是，表示队列没有阻塞，mCompleted设置为true，直接返回</p>
+
+<p>&#8194;2. 如果没有，则mCompleted设置为false，然后把当前这个Runnable对象通过<code>postAtFrontOfQueue</code>方法发送到队列头部中，等待执行，如果没有执行，那么mCompleted一直未false，则表示可能阻塞。</p>
+
+<p>一旦这个Runnable对象执行，则会执行他的run方法，我们来看下HandlerChecker的run方法，如下：</p>
+
+<pre><code class="java">@Override
+public void run() {
+    final int size = mMonitors.size();
+    for (int i = 0 ; i &lt; size ; i++) {
+        synchronized (Watchdog.this) {
+            mCurrentMonitor = mMonitors.get(i);
+        }
+        mCurrentMonitor.monitor();
+    }
+
+    synchronized (Watchdog.this) {
+        mCompleted = true;
+        mCurrentMonitor = null;
+    }
+}
+</code></pre>
+
+<p>这个方法主要的内容是：</p>
+
+<p>1.调用每个Monitor的monitor方法，来检测锁的状态，其实这个一般实现很简单，如AMS的放这个方法实现：</p>
+
+<pre><code class="java">    /** In this method we try to acquire our lock to make sure that we have not deadlocked */
+    public void monitor() {
+        synchronized (this) { }
+    }
+</code></pre>
+
+<p>就是获取锁，如果锁阻塞，那么这个方法会阻塞，Watchdog就会检测到这个异常</p>
+
+<p>2.把mCompleted赋值为true，表示没有问题，顺利执行完了</p>
+
+<h4>2.4 监视对象异常后的操作</h4>
+
+<p>这一块主要是关注Watchdong的run方法，里面有检测</p>
+
+<pre><code class="java">     @Override
+    public void run() {
+        boolean waitedHalf = false;
+        while (true) {
+          ......
+            //通过EventLog写入watchdog信息
+            EventLog.writeEvent(EventLogTags.WATCHDOG, subject);
+
+            ArrayList&lt;Integer&gt; pids = new ArrayList&lt;&gt;();
+            pids.add(Process.myPid());
+            if (mPhonePid &gt; 0) pids.add(mPhonePid);
+            // Pass !waitedHalf so that just in case we somehow wind up here without having
+            // dumped the halfway stacks, we properly re-initialize the trace file.
+          //开始调用ActivityManagerService dump栈信息
+            final File stack = ActivityManagerService.dumpStackTraces(
+                    !waitedHalf, pids, null, null, getInterestingNativePids());
+                        //等待dump操作完成
+            SystemClock.sleep(2000);
+
+          //触发内核dump所有的阻塞的线程，backtrace日志
+            doSysRq('w');
+            doSysRq('l');
+
+            // Try to add the error to the dropbox, but assuming that the ActivityManager
+            // itself may be deadlocked.  (which has happened, causing this statement to
+            // deadlock and the watchdog as a whole to be ineffective)
+          //尝试把错误信息保存到dropbox中
+            Thread dropboxThread = new Thread("watchdogWriteToDropbox") {
+                    public void run() {
+                        mActivity.addErrorToDropBox(
+                                "watchdog", null, "system_server", null, null,
+                                subject, null, stack, null);
+                    }
+                };
+            dropboxThread.start();
+            try {
+                dropboxThread.join(2000);  // wait up to 2 seconds for it to return.
+            } catch (InterruptedException ignored) {}
+
+            IActivityController controller;
+            synchronized (this) {
+                controller = mController;
+            }
+            if (controller != null) {
+                Slog.i(TAG, "Reporting stuck state to activity controller");
+                try {
+                    Binder.setDumpDisabled("Service dumps disabled due to hung system process.");
+                    // 1 = keep waiting, -1 = kill system
+                    int res = controller.systemNotResponding(subject);
+                    if (res &gt;= 0) {
+                        Slog.i(TAG, "Activity controller requested to coninue to wait");
+                        waitedHalf = false;
+                        continue;
+                    }
+                } catch (RemoteException e) {
+                }
+            }
+
+            // Only kill the process if the debugger is not attached.
+            if (Debug.isDebuggerConnected()) {
+                debuggerWasConnected = 2;
+            }
+            if (debuggerWasConnected &gt;= 2) {
+                Slog.w(TAG, "Debugger connected: Watchdog is *not* killing the system process");
+            } else if (debuggerWasConnected &gt; 0) {
+                Slog.w(TAG, "Debugger was connected: Watchdog is *not* killing the system process");
+            } else if (!allowRestart) {
+                Slog.w(TAG, "Restart not allowed: Watchdog is *not* killing the system process");
+            } else {
+              //开始杀死进程，
+                Slog.w(TAG, "*** WATCHDOG KILLING SYSTEM PROCESS: " + subject);
+                WatchdogDiagnostics.diagnoseCheckers(blockedCheckers);
+                Slog.w(TAG, "*** GOODBYE!");
+                Process.killProcess(Process.myPid());
+                System.exit(10);
+            }
+
+            waitedHalf = false;
+        }
+    }
+</code></pre>
+
+<p>发生死锁，异常后，主要的操作为：</p>
+
+<p>&#8194;1. 通过EventLog写入watcndog的event先关信息</p>
+
+<p>&#8194;2. 调用ActivityManagerService dump栈信息</p>
+
+<p>&#8194;3. 触发内核dump所有的阻塞的线程，backtrace日志</p>
+
+<p>&#8194;4. 尝试把错误信息保存到dropbox中</p>
+
+<p>&#8194;5. 并检查activity controller连接的调试器是否可以处理这次watchdog无响应，如果activity controller不要求重启，那么就忽视这次超时，从头继续运行watchdog循环。</p>
+
+<p>&#8194;6. 如果不是debug状态，杀死SystemServer并重启手机，</p>
+
+<h3>三：总结</h3>
+
+<p>整个Watchdog的监测过程如下：</p>
+
+<p>&#8194;1. 在创建SystemServer进程后，创建Watchdog对象，初始化，主要是注册系统reboot的广播监听</p>
+
+<p>&#8194;2. 在AMS准备好后，在器systemReady方法回调中，启动Watchdog线程</p>
+
+<p>&#8194;3. 在一些需要被监听的service中，通过addMonitor和addThread的方法，添加到Watchdog监听中</p>
+
+<p>&#8194;4. Watchdog利用一个死循环，每隔固定的时间（默认为30s）不断的监测对象，主要分为两种：一种是监测Looper队列是否阻塞，如果没有阻塞，则直接返回，继续下次监测。二是监测Monitor对象，并调用monitor方法，判断是否发生死锁。</p>
+
+<p>&#8194;5. 如果发生了死锁或者looper阻塞，则记录下各种日志，并杀死SystemServer进程，重启系统</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Android之文件上传原理]]></title>
-    <link href="http://lapisy.github.io/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li/"/>
-    <updated>2017-06-25T10:43:22+08:00</updated>
-    <id>http://lapisy.github.io/blog/2017/06/25/androidzhi-wen-jian-shang-chuan-yuan-li</id>
+    <link href="http://blog.lapisy.com/blog/2019/04/21/androidzhi-wen-jian-shang-chuan-yuan-li/"/>
+    <updated>2019-04-21T10:43:22+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/04/21/androidzhi-wen-jian-shang-chuan-yuan-li</id>
     <content type="html"><![CDATA[<h4>基本原理</h4>
 
 <p>我们知道，在浏览器中，我们上传文件时，是这样的（jsp）实现：

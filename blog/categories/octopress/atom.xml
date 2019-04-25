@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Octopress | Lapisy的博客]]></title>
-  <link href="http://lapisy.github.io/blog/categories/octopress/atom.xml" rel="self"/>
-  <link href="http://lapisy.github.io/"/>
-  <updated>2019-04-22T22:15:24+08:00</updated>
-  <id>http://lapisy.github.io/</id>
+  <link href="http://blog.lapisy.com/blog/categories/octopress/atom.xml" rel="self"/>
+  <link href="http://blog.lapisy.com/"/>
+  <updated>2019-04-25T17:59:11+08:00</updated>
+  <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
     <email><![CDATA[softgeek@163.com]]></email>
@@ -15,10 +15,10 @@
   
   <entry>
     <title type="html"><![CDATA[Octopress博客搭建与配置]]></title>
-    <link href="http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi/"/>
-    <updated>2019-04-22T20:43:48+08:00</updated>
-    <id>http://lapisy.github.io/blog/2019/04/22/octopressbo-ke-da-jian-yu-pei-zhi</id>
-    <content type="html"><![CDATA[<h4>Octopress安装下载</h4>
+    <link href="http://blog.lapisy.com/blog/2019/04/20/octopressbo-ke-da-jian-yu-pei-zhi/"/>
+    <updated>2019-04-20T20:43:48+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/04/20/octopressbo-ke-da-jian-yu-pei-zhi</id>
+    <content type="html"><![CDATA[<h4>一：Octopress安装下载</h4>
 
 <p>前期准备：<a href="http://octopress.org/docs/setup/">http://octopress.org/docs/setup/</a></p>
 
@@ -37,14 +37,11 @@
 <!--more-->
 
 
-<h4>配置Github</h4>
+<h4>二：配置Github</h4>
 
-<ol>
-<li>配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥</li>
-<li>然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中</li>
-<li>使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</li>
-</ol>
-
+<p>1.配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥<br/>
+2.然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中<br/>
+3.使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</p>
 
 <pre><code>hi xxx! You’ve successfully authenticated, bug GitHub does not povide shell access
 </code></pre>
@@ -66,8 +63,25 @@ $ rake setup_github_pages
 </ol>
 
 
-<pre><code>rake deploy
+<pre><code class="ruby">rake deploy
 </code></pre>
+
+<h4>三：添加导航栏</h4>
+
+<ol>
+<li>使用如下的命令创建页面,会在创建<code>source\名字\index.markdown</code>文件
+<code>ruby
+rake new_page['名字']
+</code></li>
+<li>在<code>source\_includes\custom\navigation.html</code>中添加连接</li>
+</ol>
+
+
+<h3>四：常用的命令</h3>
+
+<p>1.<code>rake new_post["文章名字"]</code></p>
+
+<blockquote><p><a href="http://octopress.org/docs/blogging/">Octopress创建文章的配置</a></p></blockquote>
 
 <p>参考文章：<br/>
 <a href="https://www.jianshu.com/p/1a117ef0e534">https://www.jianshu.com/p/1a117ef0e534</a><br/>
@@ -75,7 +89,8 @@ $ rake setup_github_pages
 <a href="https://www.jianshu.com/p/0ac2ac1a8e45">category配置</a><br>
 <a href="https://www.jianshu.com/p/fe0e089a985c">https://www.jianshu.com/p/fe0e089a985c</a></p>
 
-<p><img src="/images/test.png" alt="测试图片" /></p>
+<!-- ![测试图片](/images/test.png) -->
+
 ]]></content>
   </entry>
   
