@@ -9,7 +9,7 @@
   <meta name="author" content="Lapisy">
 
   
-  <meta name="description" content="一：概述 Watchdog 顾名思义，看门狗，是一个很重要的机制，其目的是监测系统或者硬件的运行的情况，一旦出现锁死，死机的情况，能及时重启机器（取决于每种实现的设置策略），并收集dump crash日志. 一般情况下有硬件层的Watchdog，也有软件层的Watchdog， &hellip;">
+  <meta name="description" content="文章所有的源码都是基于SDK-28的版本，也就是Android P的版本 一：概述 我们在解决ANR异常时，一般是利用打印出来的anr log，还有就是发生ANR的栈信息。一般情况下解决ANR步骤为： &#8195;1. 先利用main log来查看ANR发生的原因， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +69,113 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/">Android系统之ANR日志收集过程-Java层</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2019-04-29T22:24:59+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>10:24 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><blockquote><p>文章所有的源码都是基于SDK-28的版本，也就是Android P的版本</p></blockquote>
+
+<h3>一：概述</h3>
+
+<p>我们在解决ANR异常时，一般是利用打印出来的anr log，还有就是发生ANR的栈信息。一般情况下解决ANR步骤为：</p>
+
+<p>&#8195;1. 先利用main log来查看ANR发生的原因，是DispatchTimeout还是BroadcastTimeout，还是ServiceTimeout。同时也可以看发生ANA之前或者之后的各个进程CPU的使用情况。其基本的格式如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">04</span><span class="o">-</span><span class="mi">30</span> <span class="mi">08</span><span class="o">:</span><span class="mi">43</span><span class="o">:</span><span class="mf">46.009</span> <span class="mi">1638</span><span class="o">-</span><span class="mi">1668</span><span class="o">/</span><span class="n">system_process</span> <span class="n">E</span><span class="o">/</span><span class="nl">ActivityManager:</span> <span class="n">ANR</span> <span class="n">in</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">lapisy</span><span class="o">.</span><span class="na">apptemplate</span> <span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">lapisy</span><span class="o">.</span><span class="na">apptemplate</span><span class="o">/.</span><span class="na">MainActivity</span><span class="o">)</span>
+</span><span class='line'>    <span class="nl">PID:</span> <span class="mi">23720</span>
+</span><span class='line'>    <span class="nl">Reason:</span> <span class="n">Input</span> <span class="n">dispatching</span> <span class="n">timed</span> <span class="nf">out</span> <span class="o">(</span><span class="n">Waiting</span> <span class="n">to</span> <span class="n">send</span> <span class="n">non</span><span class="o">-</span><span class="n">key</span> <span class="n">event</span> <span class="n">because</span> <span class="n">the</span> <span class="n">touched</span> <span class="n">window</span> <span class="n">has</span> <span class="n">not</span> <span class="n">finished</span> <span class="n">processing</span> <span class="n">certain</span> <span class="n">input</span> <span class="n">events</span> <span class="n">that</span> <span class="n">were</span> <span class="n">delivered</span> <span class="n">to</span> <span class="n">it</span> <span class="n">over</span> <span class="mf">500.0</span><span class="n">ms</span> <span class="n">ago</span><span class="o">.</span>  <span class="n">Wait</span> <span class="n">queue</span> <span class="nl">length:</span> <span class="mi">6</span><span class="o">.</span>  <span class="n">Wait</span> <span class="n">queue</span> <span class="n">head</span> <span class="nl">age:</span> <span class="mf">5533.6</span><span class="n">ms</span><span class="o">.)</span>
+</span><span class='line'>    <span class="nl">Load:</span> <span class="mf">0.89</span> <span class="o">/</span> <span class="mf">0.44</span> <span class="o">/</span> <span class="mf">0.34</span>
+</span><span class='line'>    <span class="n">CPU</span> <span class="n">usage</span> <span class="n">from</span> <span class="mi">839843</span><span class="n">ms</span> <span class="n">to</span> <span class="mi">0</span><span class="n">ms</span> <span class="nf">ago</span> <span class="o">(</span><span class="mi">2019</span><span class="o">-</span><span class="mi">04</span><span class="o">-</span><span class="mi">18</span> <span class="mi">18</span><span class="o">:</span><span class="mi">35</span><span class="o">:</span><span class="mf">53.827</span> <span class="n">to</span> <span class="mi">2019</span><span class="o">-</span><span class="mi">04</span><span class="o">-</span><span class="mi">30</span> <span class="mi">08</span><span class="o">:</span><span class="mi">43</span><span class="o">:</span><span class="mf">44.991</span><span class="o">):</span>
+</span><span class='line'>      <span class="mf">4.5</span><span class="o">%</span> <span class="mi">1638</span><span class="o">/</span><span class="nl">system_server:</span> <span class="mi">3</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">1.4</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">22176</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">2.2</span><span class="o">%</span> <span class="mi">1387</span><span class="o">/</span><span class="nl">adbd:</span> <span class="mf">0.2</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">2</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">49043</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.8</span><span class="o">%</span> <span class="mi">1401</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">graphics</span><span class="o">.</span><span class="na">composer</span><span class="err">@</span><span class="mf">2.1</span><span class="o">-</span><span class="nl">service:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.7</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">18</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.4</span><span class="o">%</span> <span class="mi">1395</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">audio</span><span class="err">@</span><span class="mf">2.0</span><span class="o">-</span><span class="nl">service:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.4</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">3</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.4</span><span class="o">%</span> <span class="mi">1491</span><span class="o">/</span><span class="nl">audioserver:</span> <span class="mf">0.1</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.3</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">7</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.4</span><span class="o">%</span> <span class="mi">1413</span><span class="o">/</span><span class="nl">surfaceflinger:</span> <span class="mf">0.1</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.2</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">49</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.2</span><span class="o">%</span> <span class="mi">1780</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">systemui</span><span class="o">:</span> <span class="mf">0.1</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">1488</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.1</span><span class="o">%</span> <span class="mi">1868</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">phone</span><span class="o">:</span> <span class="mf">0.1</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">1056</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.1</span><span class="o">%</span> <span class="mi">1335</span><span class="o">/</span><span class="nl">logd:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">47</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.1</span><span class="o">%</span> <span class="mi">2223</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">launcher3</span><span class="o">:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">2852</span> <span class="n">minor</span>
+</span><span class='line'>      <span class="mf">0.1</span><span class="o">%</span> <span class="mi">7</span><span class="o">/</span><span class="nl">rcu_preempt:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.1</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>      <span class="o">.....</span>
+</span><span class='line'><span class="n">CPU</span> <span class="n">usage</span> <span class="n">from</span> <span class="mi">79</span><span class="n">ms</span> <span class="n">to</span> <span class="mi">620</span><span class="n">ms</span> <span class="nf">later</span> <span class="o">(</span><span class="mi">2019</span><span class="o">-</span><span class="mi">04</span><span class="o">-</span><span class="mi">30</span> <span class="mi">10</span><span class="o">:</span><span class="mi">29</span><span class="o">:</span><span class="mf">21.096</span> <span class="n">to</span> <span class="mi">2019</span><span class="o">-</span><span class="mi">04</span><span class="o">-</span><span class="mi">30</span> <span class="mi">10</span><span class="o">:</span><span class="mi">29</span><span class="o">:</span><span class="mf">21.637</span><span class="o">):</span>
+</span><span class='line'>      <span class="mi">159</span><span class="o">%</span> <span class="mi">8892</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">huawei</span><span class="o">.</span><span class="na">systemmanager</span><span class="o">:</span> <span class="mi">146</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">13</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">751</span> <span class="n">minor</span> <span class="mi">2</span> <span class="n">major</span>
+</span><span class='line'>        <span class="mi">92</span><span class="o">%</span> <span class="mi">9393</span><span class="o">/</span><span class="n">pool</span><span class="o">-</span><span class="mi">3</span><span class="o">-</span><span class="n">thread</span><span class="o">-</span><span class="mi">2</span><span class="o">:</span> <span class="mi">92</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>        <span class="mi">16</span><span class="o">%</span> <span class="mi">9436</span><span class="o">/</span><span class="nl">refresh_permiss:</span> <span class="mi">13</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">2.7</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>        <span class="mf">8.1</span><span class="o">%</span> <span class="mi">8902</span><span class="o">/</span><span class="nl">HeapTaskDaemon:</span> <span class="mf">8.1</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>        <span class="mf">2.7</span><span class="o">%</span> <span class="mi">9428</span><span class="o">/</span><span class="nl">PermissionAppsC:</span> <span class="mf">2.7</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>       <span class="o">+</span><span class="mi">0</span><span class="o">%</span> <span class="mi">9453</span><span class="o">/</span><span class="n">pool</span><span class="o">-</span><span class="mi">7</span><span class="o">-</span><span class="n">thread</span><span class="o">-</span><span class="mi">1</span><span class="o">:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>       <span class="o">+</span><span class="mi">0</span><span class="o">%</span> <span class="mi">9457</span><span class="o">/</span><span class="n">pool</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">thread</span><span class="o">-</span><span class="mi">1</span><span class="o">:</span> <span class="mi">0</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">0</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>      <span class="mi">99</span><span class="o">%</span> <span class="mi">1279</span><span class="o">/</span><span class="nl">system_server:</span> <span class="mi">45</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">53</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">/</span> <span class="nl">faults:</span> <span class="mi">1350</span> <span class="n">minor</span>
+</span><span class='line'>        <span class="mi">49</span><span class="o">%</span> <span class="mi">1327</span><span class="o">/</span><span class="nl">ActivityManager:</span> <span class="mi">12</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">37</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>        <span class="mi">14</span><span class="o">%</span> <span class="mi">1900</span><span class="o">/</span><span class="nl">Binder:</span><span class="mi">1279_7</span><span class="o">:</span> <span class="mi">10</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">4.1</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>        <span class="mi">12</span><span class="o">%</span> <span class="mi">11218</span><span class="o">/</span><span class="nl">Binder:</span><span class="mi">1279_19</span><span class="o">:</span> <span class="mi">10</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">2</span><span class="o">%</span> <span class="n">kernel</span>
+</span><span class='line'>       <span class="o">......</span>
+</span><span class='line'>    <span class="mi">47</span><span class="o">%</span> <span class="nl">TOTAL:</span> <span class="mi">31</span><span class="o">%</span> <span class="n">user</span> <span class="o">+</span> <span class="mi">15</span><span class="o">%</span> <span class="n">kernel</span> <span class="o">+</span> <span class="mf">0.2</span><span class="o">%</span> <span class="n">softirq</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/">Read More &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -239,6 +346,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/">Android系统之ANR日志收集过程-Java层</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2019/04/23/androidxi-tong-zhi-watchdogxue-xi-jie-xi/">Android系统之Watchdog学习解析</a>
       </li>
     
@@ -254,7 +365,7 @@
 </section>
 <section>
     <h1>Categories</h1>
-      <ul id="category-list"><li><a href='/blog/categories/android/'>android (2)</a></li><li><a href='/blog/categories/framework/'>framework (1)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
+      <ul id="category-list"><li><a href='/blog/categories/android/'>android (3)</a></li><li><a href='/blog/categories/framework/'>framework (2)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
   </section>
 
 

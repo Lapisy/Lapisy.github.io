@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Framework | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/framework/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-25T17:59:11+08:00</updated>
+  <updated>2019-04-30T10:51:52+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -12,6 +12,933 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Android系统之ANR日志收集过程-Java层]]></title>
+    <link href="http://blog.lapisy.com/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/"/>
+    <updated>2019-04-29T22:24:59+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng</id>
+    <content type="html"><![CDATA[<blockquote><p>文章所有的源码都是基于SDK-28的版本，也就是Android P的版本</p></blockquote>
+
+<h3>一：概述</h3>
+
+<p>我们在解决ANR异常时，一般是利用打印出来的anr log，还有就是发生ANR的栈信息。一般情况下解决ANR步骤为：</p>
+
+<p>&#8195;1. 先利用main log来查看ANR发生的原因，是DispatchTimeout还是BroadcastTimeout，还是ServiceTimeout。同时也可以看发生ANA之前或者之后的各个进程CPU的使用情况。其基本的格式如下：</p>
+
+<pre><code class="java">04-30 08:43:46.009 1638-1668/system_process E/ActivityManager: ANR in com.example.lapisy.apptemplate (com.example.lapisy.apptemplate/.MainActivity)
+    PID: 23720
+    Reason: Input dispatching timed out (Waiting to send non-key event because the touched window has not finished processing certain input events that were delivered to it over 500.0ms ago.  Wait queue length: 6.  Wait queue head age: 5533.6ms.)
+    Load: 0.89 / 0.44 / 0.34
+    CPU usage from 839843ms to 0ms ago (2019-04-18 18:35:53.827 to 2019-04-30 08:43:44.991):
+      4.5% 1638/system_server: 3% user + 1.4% kernel / faults: 22176 minor
+      2.2% 1387/adbd: 0.2% user + 2% kernel / faults: 49043 minor
+      0.8% 1401/android.hardware.graphics.composer@2.1-service: 0% user + 0.7% kernel / faults: 18 minor
+      0.4% 1395/android.hardware.audio@2.0-service: 0% user + 0.4% kernel / faults: 3 minor
+      0.4% 1491/audioserver: 0.1% user + 0.3% kernel / faults: 7 minor
+      0.4% 1413/surfaceflinger: 0.1% user + 0.2% kernel / faults: 49 minor
+      0.2% 1780/com.android.systemui: 0.1% user + 0% kernel / faults: 1488 minor
+      0.1% 1868/com.android.phone: 0.1% user + 0% kernel / faults: 1056 minor
+      0.1% 1335/logd: 0% user + 0% kernel / faults: 47 minor
+      0.1% 2223/com.android.launcher3: 0% user + 0% kernel / faults: 2852 minor
+      0.1% 7/rcu_preempt: 0% user + 0.1% kernel
+        .....
+CPU usage from 79ms to 620ms later (2019-04-30 10:29:21.096 to 2019-04-30 10:29:21.637):
+      159% 8892/com.huawei.systemmanager: 146% user + 13% kernel / faults: 751 minor 2 major
+        92% 9393/pool-3-thread-2: 92% user + 0% kernel
+        16% 9436/refresh_permiss: 13% user + 2.7% kernel
+        8.1% 8902/HeapTaskDaemon: 8.1% user + 0% kernel
+        2.7% 9428/PermissionAppsC: 2.7% user + 0% kernel
+       +0% 9453/pool-7-thread-1: 0% user + 0% kernel
+       +0% 9457/pool-8-thread-1: 0% user + 0% kernel
+      99% 1279/system_server: 45% user + 53% kernel / faults: 1350 minor
+        49% 1327/ActivityManager: 12% user + 37% kernel
+        14% 1900/Binder:1279_7: 10% user + 4.1% kernel
+        12% 11218/Binder:1279_19: 10% user + 2% kernel
+       ......
+    47% TOTAL: 31% user + 15% kernel + 0.2% softirq
+</code></pre>
+
+<!--more-->
+
+
+<p>&#8195;2. 然后利用traces文件中具体的栈信息，来判断具体的位置和具体的原因。其基本格式和日志如下：</p>
+
+<pre><code class="java">
+----- pid 23720 at 2019-04-30 08:43:45 -----
+Cmd line: com.example.lapisy.apptemplate
+Build fingerprint: 'Android/sdk_phone_x86_64/generic_x86_64:8.0.0/OSR1.180418.004/4931640:userdebug/test-keys'
+ABI: 'x86_64'
+Build type: optimized
+Zygote loaded classes=4675 post zygote classes=217
+Intern table: 42644 strong; 137 weak
+JNI: CheckJNI is on; globals=524 (plus 22 weak)
+Libraries: /system/lib64/libandroid.so /system/lib64/libcompiler_rt.so /system/lib64/libjavacrypto.so /system/lib64/libjnigraphics.so /system/lib64/libmedia_jni.so /system/lib64/libsoundpool.so /system/lib64/libwebviewchromium_loader.so libjavacore.so libopenjdk.so (9)
+Heap: 67% free, 725KB/2MB; 17739 objects
+Dumping cumulative Gc timings
+Start Dumping histograms for 1 iterations for concurrent copying
+ResumeRunnableThreads:  Sum: 155.370ms 99% C.I. 155.370ms-155.370ms Avg: 155.370ms Max: 155.370ms
+ThreadListFlip: Sum: 90.071ms 99% C.I. 90.071ms-90.071ms Avg: 90.071ms Max: 90.071ms
+ProcessMarkStack:   Sum: 30.911ms 99% C.I. 30.911ms-30.911ms Avg: 30.911ms Max: 30.911ms
+SweepSystemWeaks:   Sum: 8.240ms 99% C.I. 8.240ms-8.240ms Avg: 8.240ms Max: 8.240ms
+VisitConcurrentRoots:   Sum: 5.951ms 99% C.I. 5.951ms-5.951ms Avg: 5.951ms Max: 5.951ms
+......
+......
+concurrent copying total time: 311.388ms mean time: 311.388ms
+concurrent copying freed: 5008 objects with total size 2MB
+concurrent copying throughput: 16102.9/s / 8MB/s
+Cumulative bytes moved 2290824
+Cumulative objects moved 51583
+Total time spent in GC: 311.388ms
+Mean GC size throughput: 8MB/s
+Mean GC object throughput: 16082.8 objects/s
+Total number of allocations 22747
+Total bytes allocated 3MB
+Total bytes freed 2MB
+Free memory 1504KB
+Free memory until GC 1504KB
+Free memory until OOME 383MB
+Total memory 2MB
+Max memory 384MB
+Zygote space size 588KB
+Total mutator paused time: 606us
+Total time waiting for GC to complete: 131.764ms
+Total GC count: 1
+Total GC time: 311.388ms
+Total blocking GC count: 0
+Total blocking GC time: 0
+Histogram of GC count per 10000 ms: 0:1
+Histogram of blocking GC count per 10000 ms: 0:1
+Registered native bytes allocated: 3529742
+/data/app/com.example.lapisy.apptemplate-2XStSJcJb6Nk1a2drTSdOw==/oat/x86_64/base.odex: quicken
+Current JIT code cache size: 3KB
+Current JIT data cache size: 4KB
+Current JIT capacity: 64KB
+Current number of JIT code cache entries: 10
+Total number of JIT compilations: 10
+Total number of JIT compilations for on stack replacement: 0
+Total number of JIT code cache collections: 0
+Memory used for stack maps: Avg: 124B Max: 344B Min: 24B
+Memory used for compiled code: Avg: 357B Max: 1448B Min: 1B
+Memory used for profiling info: Avg: 172B Max: 1208B Min: 32B
+Start Dumping histograms for 10 iterations for JIT timings
+Compiling:  Sum: 111.851ms 99% C.I. 0.084ms-38.480ms Avg: 11.185ms Max: 38.498ms
+TrimMaps:   Sum: 60.285ms 99% C.I. 0.010ms-56.279ms Avg: 6.028ms Max: 58.717ms
+Done Dumping histograms
+Memory used for compilation: Avg: 91KB Max: 256KB Min: 15KB
+ProfileSaver total_bytes_written=0
+ProfileSaver total_number_of_writes=0
+ProfileSaver total_number_of_code_cache_queries=0
+ProfileSaver total_number_of_skipped_writes=0
+ProfileSaver total_number_of_failed_writes=0
+ProfileSaver total_ms_of_sleep=5000
+ProfileSaver total_ms_of_work=0
+ProfileSaver max_number_profile_entries_cached=1
+ProfileSaver total_number_of_hot_spikes=0
+ProfileSaver total_number_of_wake_ups=0
+
+suspend all histogram:  Sum: 189us 99% C.I. 0.320us-43us Avg: 23.625us Max: 43us
+DALVIK THREADS (16):
+"Signal Catcher" daemon prio=5 tid=3 Runnable
+  | group="system" sCount=0 dsCount=0 flags=0 obj=0x14ea5df8 self=0x7e8c4905c400
+  | sysTid=23726 nice=0 cgrp=default sched=0/0 handle=0x7e8c3fc064f0
+  | state=R schedstat=( 5286484 3613279 4 ) utm=0 stm=0 core=0 HZ=100
+  | stack=0x7e8c3fb0c000-0x7e8c3fb0e000 stackSize=1005KB
+  | held mutexes= "mutator lock"(shared held)
+  native: #00 pc 0000000000435ca5  /system/lib64/libart.so (_ZN3art15DumpNativeStackERNSt3__113basic_ostreamIcNS0_11char_traitsIcEEEEiP12BacktraceMapPKcPNS_9ArtMethodEPv+213)
+  native: #01 pc 0000000000515b12  /system/lib64/libart.so (_ZNK3art6Thread9DumpStackERNSt3__113basic_ostreamIcNS1_11char_traitsIcEEEEbP12BacktraceMapb+322)
+  native: #02 pc 000000000052e56e  /system/lib64/libart.so (_ZN3art14DumpCheckpoint3RunEPNS_6ThreadE+926)
+  native: #03 pc 0000000000526399  /system/lib64/libart.so (_ZN3art10ThreadList13RunCheckpointEPNS_7ClosureES2_+489)
+  native: #04 pc 0000000000525d8b  /system/lib64/libart.so (_ZN3art10ThreadList4DumpERNSt3__113basic_ostreamIcNS1_11char_traitsIcEEEEb+747)
+  native: #05 pc 0000000000525943  /system/lib64/libart.so (_ZN3art10ThreadList14DumpForSigQuitERNSt3__113basic_ostreamIcNS1_11char_traitsIcEEEE+867)
+  native: #06 pc 00000000004f7c29  /system/lib64/libart.so (_ZN3art7Runtime14DumpForSigQuitERNSt3__113basic_ostreamIcNS1_11char_traitsIcEEEE+201)
+  native: #07 pc 000000000050228e  /system/lib64/libart.so (_ZN3art13SignalCatcher13HandleSigQuitEv+1790)
+  native: #08 pc 0000000000500fca  /system/lib64/libart.so (_ZN3art13SignalCatcher3RunEPv+378)
+  native: #09 pc 000000000007706b  /system/lib64/libc.so (_ZL15__pthread_startPv+27)
+  native: #10 pc 0000000000028aad  /system/lib64/libc.so (__start_thread+61)
+  native: #11 pc 0000000000027515  /system/lib64/libc.so (__bionic_clone+53)
+  (no managed stack frames)
+
+"main" prio=5 tid=1 Sleeping
+  | group="main" sCount=1 dsCount=0 flags=1 obj=0x73ae4670 self=0x7e8c490bea00
+  | sysTid=23720 nice=-10 cgrp=default sched=0/0 handle=0x7e8c4df92a08
+  | state=S schedstat=( 438163483 342098452 207 ) utm=29 stm=14 core=1 HZ=100
+  | stack=0x7fffbf9e8000-0x7fffbf9ea000 stackSize=8MB
+  | held mutexes=
+  at java.lang.Thread.sleep(Native method)
+  - sleeping on &lt;0x03cabe95&gt; (a java.lang.Object)
+  at java.lang.Thread.sleep(Thread.java:373)
+  - locked &lt;0x03cabe95&gt; (a java.lang.Object)
+  at java.lang.Thread.sleep(Thread.java:314)
+  at android.os.SystemClock.sleep(SystemClock.java:122)
+  at com.example.lapisy.apptemplate.MainActivity$1.onClick(MainActivity.java:77)
+  at android.view.View.performClick(View.java:6256)
+  at android.view.View$PerformClick.run(View.java:24701)
+  at android.os.Handler.handleCallback(Handler.java:789)
+  at android.os.Handler.dispatchMessage(Handler.java:98)
+  at android.os.Looper.loop(Looper.java:164)
+  at android.app.ActivityThread.main(ActivityThread.java:6541)
+  at java.lang.reflect.Method.invoke(Native method)
+  at com.android.internal.os.Zygote$MethodAndArgsCaller.run(Zygote.java:240)
+  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:767)
+
+"Jit thread pool worker thread 0" daemon prio=5 tid=2 Native
+  | group="main" sCount=1 dsCount=0 flags=1 obj=0x14e924b8 self=0x7e8c3f80e000
+  | sysTid=23725 nice=9 cgrp=default sched=0/0 handle=0x7e8c3fd074f0
+  | state=S schedstat=( 17625138 213848019 39 ) utm=0 stm=1 core=0 HZ=100
+  | stack=0x7e8c3fc09000-0x7e8c3fc0b000 stackSize=1021KB
+  | held mutexes=
+  kernel: futex_wait_queue_me+0xdf/0x130
+  kernel: futex_wait+0x113/0x22e
+  kernel: do_futex+0xbe/0x825
+  kernel: SyS_futex+0xbd/0x124
+  kernel: system_call_fastpath+0x12/0x17
+  native: #00 pc 00000000000276f6  /system/lib64/libc.so (syscall+22)
+  native: #01 pc 000000000014d38e  /system/lib64/libart.so (_ZN3art17ConditionVariable16WaitHoldingLocksEPNS_6ThreadE+110)
+  native: #02 pc 0000000000530012  /system/lib64/libart.so (_ZN3art10ThreadPool7GetTaskEPNS_6ThreadE+322)
+  native: #03 pc 000000000052f4a1  /system/lib64/libart.so (_ZN3art16ThreadPoolWorker3RunEv+97)
+  native: #04 pc 000000000052ef53  /system/lib64/libart.so (_ZN3art16ThreadPoolWorker8CallbackEPv+131)
+  native: #05 pc 000000000007706b  /system/lib64/libc.so (_ZL15__pthread_startPv+27)
+  native: #06 pc 0000000000028aad  /system/lib64/libc.so (__start_thread+61)
+  native: #07 pc 0000000000027515  /system/lib64/libc.so (__bionic_clone+53)
+  (no managed stack frames)
+  ......
+  ......
+    ----- end 23720 -----
+</code></pre>
+
+<p>那么问题来了，这里就会产生几个问题：</p>
+
+<p>&#8195;1. 这些日志是在哪里收集的呢？</p>
+
+<p>&#8195;2. 收集什么信息？如何收集的？</p>
+
+<p>只有弄明白这两个问题，才能更好的理解和处理ANR问题。</p>
+
+<h3>二：ANR日志的收集过程</h3>
+
+<p>当系统发生anr的时候，都会调用的<code>AppErrors</code>的<code>appNotResponding</code>方法，那我们现在慢慢来看这个函数的整个功能。代码有点长，但是不急，我们慢慢来看（代码基本上没有删减，因为我觉得这些代码得一遍一遍的看，当时觉得不重要的，说不定就是挺重要的，删除了就再也看不到了，这是我自己的一个习惯）。</p>
+
+<pre><code class="java">    final void appNotResponding(ProcessRecord app, ActivityRecord activity,
+            ActivityRecord parent, boolean aboveSystem, final String annotation) {
+        ArrayList&lt;Integer&gt; firstPids = new ArrayList&lt;Integer&gt;(5);
+        SparseArray&lt;Boolean&gt; lastPids = new SparseArray&lt;Boolean&gt;(20);
+
+        if (mService.mController != null) {
+            try {
+                // 0 == continue, -1 = kill process immediately
+                int res = mService.mController.appEarlyNotResponding(
+                        app.processName, app.pid, annotation);
+                if (res &lt; 0 &amp;&amp; app.pid != MY_PID) {
+                    app.kill("anr", true);
+                }
+            } catch (RemoteException e) {
+                mService.mController = null;
+                Watchdog.getInstance().setActivityController(null);
+            }
+        }
+
+        long anrTime = SystemClock.uptimeMillis();
+        if (ActivityManagerService.MONITOR_CPU_USAGE) {
+            mService.updateCpuStatsNow();
+        }
+
+        // Unless configured otherwise, swallow ANRs in background processes &amp; kill the process.
+        boolean showBackground = Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.ANR_SHOW_BACKGROUND, 0) != 0;
+
+        boolean isSilentANR;
+
+        synchronized (mService) {
+            // PowerManager.reboot() can block for a long time, so ignore ANRs while shutting down.
+            if (mService.mShuttingDown) {
+                Slog.i(TAG, "During shutdown skipping ANR: " + app + " " + annotation);
+                return;
+            } else if (app.notResponding) {
+                Slog.i(TAG, "Skipping duplicate ANR: " + app + " " + annotation);
+                return;
+            } else if (app.crashing) {
+                Slog.i(TAG, "Crashing app skipping ANR: " + app + " " + annotation);
+                return;
+            } else if (app.killedByAm) {
+                Slog.i(TAG, "App already killed by AM skipping ANR: " + app + " " + annotation);
+                return;
+            } else if (app.killed) {
+                Slog.i(TAG, "Skipping died app ANR: " + app + " " + annotation);
+                return;
+            }
+
+            // In case we come through here for the same app before completing
+            // this one, mark as anring now so we will bail out.
+            app.notResponding = true;
+
+            // Log the ANR to the event log.
+            //开始使用EventLog打印ANR的event log
+            EventLog.writeEvent(EventLogTags.AM_ANR, app.userId, app.pid,
+                    app.processName, app.info.flags, annotation);
+                        //把当前的app添加到最先开始收集栈的列表中
+            firstPids.add(app.pid);
+
+            //如果是发生在后台的anr，那么就不收集
+            isSilentANR = !showBackground &amp;&amp; !isInterestingForBackgroundTraces(app);
+            if (!isSilentANR) {
+                int parentPid = app.pid;
+                if (parent != null &amp;&amp; parent.app != null &amp;&amp; parent.app.pid &gt; 0) {
+                    parentPid = parent.app.pid;
+                }
+                if (parentPid != app.pid) firstPids.add(parentPid);
+
+                if (MY_PID != app.pid &amp;&amp; MY_PID != parentPid) firstPids.add(MY_PID);
+
+                for (int i = mService.mLruProcesses.size() - 1; i &gt;= 0; i--) {
+                    ProcessRecord r = mService.mLruProcesses.get(i);
+                    if (r != null &amp;&amp; r.thread != null) {
+                        int pid = r.pid;
+                        if (pid &gt; 0 &amp;&amp; pid != app.pid &amp;&amp; pid != parentPid &amp;&amp; pid != MY_PID) {
+                            if (r.persistent) {
+                                firstPids.add(pid);
+                                if (DEBUG_ANR) Slog.i(TAG, "Adding persistent proc: " + r);
+                            } else if (r.treatLikeActivity) {
+                                firstPids.add(pid);
+                                if (DEBUG_ANR) Slog.i(TAG, "Adding likely IME: " + r);
+                            } else {
+                                lastPids.put(pid, Boolean.TRUE);
+                                if (DEBUG_ANR) Slog.i(TAG, "Adding ANR proc: " + r);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Log the ANR to the main log.
+        //这个地方就是向我们的main log中打印ANR日志
+        //注释1
+        StringBuilder info = new StringBuilder();
+        info.setLength(0);
+        info.append("ANR in ").append(app.processName);
+        if (activity != null &amp;&amp; activity.shortComponentName != null) {
+            info.append(" (").append(activity.shortComponentName).append(")");
+        }
+        info.append("\n");
+        info.append("PID: ").append(app.pid).append("\n");
+        if (annotation != null) {
+            info.append("Reason: ").append(annotation).append("\n");
+        }
+        if (parent != null &amp;&amp; parent != activity) {
+            info.append("Parent: ").append(parent.shortComponentName).append("\n");
+        }
+
+        ProcessCpuTracker processCpuTracker = new ProcessCpuTracker(true);
+
+        // don't dump native PIDs for background ANRs unless it is the process of interest
+        String[] nativeProcs = null;
+        if (isSilentANR) {
+            for (int i = 0; i &lt; NATIVE_STACKS_OF_INTEREST.length; i++) {
+                if (NATIVE_STACKS_OF_INTEREST[i].equals(app.processName)) {
+                    nativeProcs = new String[] { app.processName };
+                    break;
+                }
+            }
+        } else {
+            nativeProcs = NATIVE_STACKS_OF_INTEREST;
+        }
+
+        int[] pids = nativeProcs == null ? null : Process.getPidsForCommands(nativeProcs);
+        ArrayList&lt;Integer&gt; nativePids = null;
+
+        if (pids != null) {
+            nativePids = new ArrayList&lt;Integer&gt;(pids.length);
+            for (int i : pids) {
+                nativePids.add(i);
+            }
+        }
+
+        // For background ANRs, don't pass the ProcessCpuTracker to
+        // avoid spending 1/2 second collecting stats to rank lastPids.
+        //开始收集发生anr的栈信息到制定的文件中
+        //具体分析看[2.1节的分析]
+        File tracesFile = ActivityManagerService.dumpStackTraces(
+                true, firstPids,
+                (isSilentANR) ? null : processCpuTracker,
+                (isSilentANR) ? null : lastPids,
+                nativePids);
+
+        String cpuInfo = null;
+        if (ActivityManagerService.MONITOR_CPU_USAGE) {
+            mService.updateCpuStatsNow();
+            synchronized (mService.mProcessCpuTracker) {
+                //这里会打印cpu中的信息
+                //具体看[2.2节分析]
+                cpuInfo = mService.mProcessCpuTracker.printCurrentState(anrTime);
+            }
+            info.append(processCpuTracker.printCurrentLoad());
+            info.append(cpuInfo);
+        }
+
+        info.append(processCpuTracker.printCurrentState(anrTime));
+
+        Slog.e(TAG, info.toString());
+        if (tracesFile == null) {
+            // There is no trace file, so dump (only) the alleged culprit's threads to the log
+            Process.sendSignal(app.pid, Process.SIGNAL_QUIT);
+        }
+
+        StatsLog.write(StatsLog.ANR_OCCURRED, app.uid, app.processName,
+                activity == null ? "unknown": activity.shortComponentName, annotation,
+                (app.info != null) ? (app.info.isInstantApp()
+                        ? StatsLog.ANROCCURRED__IS_INSTANT_APP__TRUE
+                        : StatsLog.ANROCCURRED__IS_INSTANT_APP__FALSE)
+                        : StatsLog.ANROCCURRED__IS_INSTANT_APP__UNAVAILABLE,
+                app != null ? (app.isInterestingToUserLocked()
+                        ? StatsLog.ANROCCURRED__FOREGROUND_STATE__FOREGROUND
+                        : StatsLog.ANROCCURRED__FOREGROUND_STATE__BACKGROUND)
+                        : StatsLog.ANROCCURRED__FOREGROUND_STATE__UNKNOWN);
+        mService.addErrorToDropBox("anr", app, app.processName, activity, parent, annotation,
+                cpuInfo, tracesFile, null);
+
+        if (mService.mController != null) {
+            try {
+                // 0 == show dialog, 1 = keep waiting, -1 = kill process immediately
+                int res = mService.mController.appNotResponding(
+                        app.processName, app.pid, info.toString());
+                if (res != 0) {
+                    if (res &lt; 0 &amp;&amp; app.pid != MY_PID) {
+                        app.kill("anr", true);
+                    } else {
+                        synchronized (mService) {
+                            mService.mServices.scheduleServiceTimeoutLocked(app);
+                        }
+                    }
+                    return;
+                }
+            } catch (RemoteException e) {
+                mService.mController = null;
+                Watchdog.getInstance().setActivityController(null);
+            }
+        }
+
+        synchronized (mService) {
+            mService.mBatteryStatsService.noteProcessAnr(app.processName, app.uid);
+
+            if (isSilentANR) {
+                app.kill("bg anr", true);
+                return;
+            }
+
+            // Set the app's notResponding state, and look up the errorReportReceiver
+            //设置app的notResponding状态，并且查找errorreport的接受者
+            makeAppNotRespondingLocked(app,
+                    activity != null ? activity.shortComponentName : null,
+                    annotation != null ? "ANR " + annotation : "ANR",
+                    info.toString());
+
+            // Bring up the infamous App Not Responding dialog
+            //发送消息弹出一个anr的弹窗
+            Message msg = Message.obtain();
+            msg.what = ActivityManagerService.SHOW_NOT_RESPONDING_UI_MSG;
+            msg.obj = new AppNotRespondingDialog.Data(app, activity, aboveSystem);
+
+            mService.mUiHandler.sendMessage(msg);
+        }
+    }
+</code></pre>
+
+<p>&#8195;<strong>注释1</strong>：这个地方就是构造了我们main log中的头部最开始的信息，收集了anr发生的进程，主要原因，也就是下面这一段：</p>
+
+<pre><code class="java">04-30 08:43:46.009 1638-1668/system_process E/ActivityManager: ANR in com.example.lapisy.apptemplate (com.example.lapisy.apptemplate/.MainActivity)
+    PID: 23720
+    Reason: Input dispatching timed out (Waiting to send non-key event because the touched window has not finished processing certain input events that were delivered to it over 500.0ms ago.  Wait queue length: 6.  Wait queue head age: 5533.6ms.)
+</code></pre>
+
+<h4>2.1 AMS#dumpStackTraces方法</h4>
+
+<p>这个方法主要是手机栈信息，然后把信息写入到制定的文件，全局的文件路径是<code>/data/anr/traces.txt</code>，我们看看他的具体实现：</p>
+
+<pre><code class="java">    /**
+     * If a stack trace dump file is configured, dump process stack traces.
+     * @param clearTraces causes the dump file to be erased prior to the new
+     *    traces being written, if true; when false, the new traces will be
+     *    appended to any existing file content.
+     * @param firstPids of dalvik VM processes to dump stack traces for first
+     * @param lastPids of dalvik VM processes to dump stack traces for last
+     * @param nativePids optional list of native pids to dump stack crawls
+     */
+    public static File dumpStackTraces(boolean clearTraces, ArrayList&lt;Integer&gt; firstPids,
+            ProcessCpuTracker processCpuTracker, SparseArray&lt;Boolean&gt; lastPids,
+            ArrayList&lt;Integer&gt; nativePids) {
+        ArrayList&lt;Integer&gt; extraPids = null;
+
+        // Measure CPU usage as soon as we're called in order to get a realistic sampling
+        // of the top users at the time of the request.
+        if (processCpuTracker != null) {
+            processCpuTracker.init();
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ignored) {
+            }
+
+            processCpuTracker.update();
+
+            // We'll take the stack crawls of just the top apps using CPU.
+            final int N = processCpuTracker.countWorkingStats();
+            extraPids = new ArrayList&lt;&gt;();
+            for (int i = 0; i &lt; N &amp;&amp; extraPids.size() &lt; 5; i++) {
+                ProcessCpuTracker.Stats stats = processCpuTracker.getWorkingStats(i);
+                if (lastPids.indexOfKey(stats.pid) &gt;= 0) {
+                    if (DEBUG_ANR) Slog.d(TAG, "Collecting stacks for extra pid " + stats.pid);
+
+                    extraPids.add(stats.pid);
+                } else if (DEBUG_ANR) {
+                    Slog.d(TAG, "Skipping next CPU consuming process, not a java proc: "
+                            + stats.pid);
+                }
+            }
+        }
+
+        boolean useTombstonedForJavaTraces = false;
+        File tracesFile;
+                //判断系统是否配置了存放anr日志的目录，默认情况下是没有配置的,华为手机默认配置为：/data/anr
+        //可以使用反射，自己来测试这些值
+        final String tracesDirProp = SystemProperties.get("dalvik.vm.stack-trace-dir", "");
+        if (tracesDirProp.isEmpty()) {
+            // When dalvik.vm.stack-trace-dir is not set, we are using the "old" trace
+            // dumping scheme. All traces are written to a global trace file (usually
+            // "/data/anr/traces.txt") so the code below must take care to unlink and recreate
+            // the file if requested.
+            //
+            // This mode of operation will be removed in the near future.
+
+                        //得到的是系统默认存放anr日志的路径，默认为/data/anr/trace.txt
+            //可以使用反射，自己来测试
+            String globalTracesPath = SystemProperties.get("dalvik.vm.stack-trace-file", null);
+            if (globalTracesPath.isEmpty()) {
+                Slog.w(TAG, "dumpStackTraces: no trace path configured");
+                return null;
+            }
+                        //创建文件
+            tracesFile = new File(globalTracesPath);
+            try {
+                //是否清空原来的文件，默认anr情况下clearTraces为true，清空
+                if (clearTraces &amp;&amp; tracesFile.exists()) {
+                    tracesFile.delete();
+                }
+
+                tracesFile.createNewFile();
+                FileUtils.setPermissions(globalTracesPath, 0666, -1, -1); // -rw-rw-rw-
+            } catch (IOException e) {
+                Slog.w(TAG, "Unable to prepare ANR traces file: " + tracesFile, e);
+                return null;
+            }
+        } else {
+            File tracesDir = new File(tracesDirProp);
+            // When dalvik.vm.stack-trace-dir is set, we use the "new" trace dumping scheme.
+            // Each set of ANR traces is written to a separate file and dumpstate will process
+            // all such files and add them to a captured bug report if they're recent enough.
+            maybePruneOldTraces(tracesDir);
+
+            // NOTE: We should consider creating the file in native code atomically once we've
+            // gotten rid of the old scheme of dumping and lot of the code that deals with paths
+            // can be removed.
+            tracesFile = createAnrDumpFile(tracesDir);
+            if (tracesFile == null) {
+                return null;
+            }
+
+            useTombstonedForJavaTraces = true;
+        }
+
+        dumpStackTraces(tracesFile.getAbsolutePath(), firstPids, nativePids, extraPids,
+                useTombstonedForJavaTraces);
+        return tracesFile;
+    }
+</code></pre>
+
+<p>如果是系统配置了<code>dalvik.vm.stack-trace-dir</code>这个属性，则表示使用tombstone的方式来dump日志，那么这种方式下，创建文件的方式是不一样的，我们看<code>createAnrDumpFile</code>方法，如下：</p>
+
+<pre><code class="java">    private static synchronized File createAnrDumpFile(File tracesDir) {
+        if (sAnrFileDateFormat == null) {
+            sAnrFileDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
+        }
+
+        final String formattedDate = sAnrFileDateFormat.format(new Date());
+        //tracesDir，模拟器没有配置，华为手机配置为/data/anr
+        final File anrFile = new File(tracesDir, "anr_" + formattedDate);
+
+        try {
+            if (anrFile.createNewFile()) {
+                FileUtils.setPermissions(anrFile.getAbsolutePath(), 0600, -1, -1); // -rw-------
+                return anrFile;
+            } else {
+                Slog.w(TAG, "Unable to create ANR dump file: createNewFile failed");
+            }
+        } catch (IOException ioe) {
+            Slog.w(TAG, "Exception creating ANR dump file:", ioe);
+        }
+
+        return null;
+    }
+</code></pre>
+
+<p>从上面可以看出，如果配置了<code>dalvik.vm.stack-trace-dir</code>，则存储anr栈信息的文件名称为变为了</p>
+
+<p><strong>tracesDir+&ldquo;tracesDir&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
+
+<p>进一步调用AMS的dumpStackTraces方法，如下：</p>
+
+<pre><code class="java">    private static void dumpStackTraces(String tracesFile, ArrayList&lt;Integer&gt; firstPids,
+            ArrayList&lt;Integer&gt; nativePids, ArrayList&lt;Integer&gt; extraPids,
+            boolean useTombstonedForJavaTraces) {
+
+        // We don't need any sort of inotify based monitoring when we're dumping traces via
+        // tombstoned. Data is piped to an "intercept" FD installed in tombstoned so we're in full
+        // control of all writes to the file in question.
+        final DumpStackFileObserver observer;
+        if (useTombstonedForJavaTraces) {
+            observer = null;
+        } else {
+            // Use a FileObserver to detect when traces finish writing.
+            // The order of traces is considered important to maintain for legibility.
+            observer = new DumpStackFileObserver(tracesFile);
+        }
+
+        //我们必须在20s内完成dump stacks的信息
+        long remainingTime = 20 * 1000;
+        try {
+            //利用FileObserver来监听/anr/data/traces.txt目录
+            if (observer != null) {
+                observer.startWatching();
+            }
+
+            // First collect all of the stacks of the most important pids.
+            //首先收集最重要pids的栈信息,一般就是直接导致anr的进程，开发中就是我们自己应用的进程
+            if (firstPids != null) {
+                int num = firstPids.size();
+                for (int i = 0; i &lt; num; i++) {
+                    if (DEBUG_ANR) Slog.d(TAG, "Collecting stacks for pid "
+                            + firstPids.get(i));
+                    final long timeTaken;
+                    //是否使用tombstone来记录java的堆栈信息
+                    if (useTombstonedForJavaTraces) {
+                        timeTaken = dumpJavaTracesTombstoned(firstPids.get(i), tracesFile, remainingTime);
+                    } else {
+                        timeTaken = observer.dumpWithTimeout(firstPids.get(i), remainingTime);
+                    }
+
+                    remainingTime -= timeTaken;
+                    if (remainingTime &lt;= 0) {
+                        Slog.e(TAG, "Aborting stack trace dump (current firstPid=" + firstPids.get(i) +
+                            "); deadline exceeded.");
+                        return;
+                    }
+
+                    if (DEBUG_ANR) {
+                        Slog.d(TAG, "Done with pid " + firstPids.get(i) + " in " + timeTaken + "ms");
+                    }
+                }
+            }
+
+            // Next collect the stacks of the native pids
+            //如果20s时间还有剩余，那么继续收集那些native进程的堆栈信息
+            if (nativePids != null) {
+                for (int pid : nativePids) {
+                    if (DEBUG_ANR) Slog.d(TAG, "Collecting stacks for native pid " + pid);
+                    final long nativeDumpTimeoutMs = Math.min(NATIVE_DUMP_TIMEOUT_MS, remainingTime);
+
+                    final long start = SystemClock.elapsedRealtime();
+                    Debug.dumpNativeBacktraceToFileTimeout(
+                            pid, tracesFile, (int) (nativeDumpTimeoutMs / 1000));
+                    final long timeTaken = SystemClock.elapsedRealtime() - start;
+
+                    remainingTime -= timeTaken;
+                    if (remainingTime &lt;= 0) {
+                        Slog.e(TAG, "Aborting stack trace dump (current native pid=" + pid +
+                            "); deadline exceeded.");
+                        return;
+                    }
+
+                    if (DEBUG_ANR) {
+                        Slog.d(TAG, "Done with native pid " + pid + " in " + timeTaken + "ms");
+                    }
+                }
+            }
+
+
+            //最后，如果20s的时间还有剩余，那么收集cpu tracker中所有的其他pid的栈信息
+            if (extraPids != null) {
+                for (int pid : extraPids) {
+                    if (DEBUG_ANR) Slog.d(TAG, "Collecting stacks for extra pid " + pid);
+
+                    final long timeTaken;
+                    if (useTombstonedForJavaTraces) {
+                        timeTaken = dumpJavaTracesTombstoned(pid, tracesFile, remainingTime);
+                    } else {
+                        timeTaken = observer.dumpWithTimeout(pid, remainingTime);
+                    }
+
+                    remainingTime -= timeTaken;
+                    if (remainingTime &lt;= 0) {
+                        Slog.e(TAG, "Aborting stack trace dump (current extra pid=" + pid +
+                                "); deadline exceeded.");
+                        return;
+                    }
+
+                    if (DEBUG_ANR) {
+                        Slog.d(TAG, "Done with extra pid " + pid + " in " + timeTaken + "ms");
+                    }
+                }
+            }
+        } finally {
+            if (observer != null) {
+              //停止监听文件夹
+                observer.stopWatching();
+            }
+        }
+    }
+</code></pre>
+
+<p>这里有两种不走来获取进程stack</p>
+
+<p>&#8195;1. 使用DumpStackFileObserver的dumpWithTimeout方法来获取堆栈信息</p>
+
+<pre><code class="java">       public long dumpWithTimeout(int pid, long timeout) {
+                //发送一个SIGNAL_QUIT信号，开始获取堆栈信息
+                //等效于adb shell kill -3 pid
+            sendSignal(pid, SIGNAL_QUIT);
+            final long start = SystemClock.elapsedRealtime();
+                        //timeout传进来的值，最大的为20s，TRACE_DUMP_TIMEOUT_MS默认值为10s
+                //等待大概10s钟
+            final long waitTime = Math.min(timeout, TRACE_DUMP_TIMEOUT_MS);
+            synchronized (this) {
+                try {
+                    wait(waitTime); // Wait for traces file to be closed.
+                } catch (InterruptedException e) {
+                    Slog.wtf(TAG, e);
+                }
+            }
+
+            // This avoids a corner case of passing a negative time to the native
+            // trace in case we've already hit the overall timeout.
+            final long timeWaited = SystemClock.elapsedRealtime() - start;
+            if (timeWaited &gt;= timeout) {
+                return timeWaited;
+            }
+                //public synchronized void onEvent(int event, String path) {
+            //  mClosed = true;
+            //  notify();
+                //}
+                        //mclosed值在监视的onEvent方法里置位true，然后条用notify方法,通知不用等待
+                //如果等待了timeWaited时间后，anr的traces.txt文件还没有生成，则开始尝试dump
+                //native stack的信息
+            if (!mClosed) {
+                Slog.w(TAG, "Didn't see close of " + mTracesPath + " for pid " + pid +
+                       ". Attempting native stack collection.");
+
+                final long nativeDumpTimeoutMs = Math.min(
+                        NATIVE_DUMP_TIMEOUT_MS, timeout - timeWaited);
+
+                Debug.dumpNativeBacktraceToFileTimeout(pid, mTracesPath,
+                        (int) (nativeDumpTimeoutMs / 1000));
+            }
+
+            final long end = SystemClock.elapsedRealtime();
+            mClosed = false;
+
+            return (end - start);
+        }
+    }
+</code></pre>
+
+<p>&#8195;2. 利用AMS的dumpJavaTracesTombstoned方法来获取日志</p>
+
+<pre><code class="java">    /**
+     * Dump java traces for process {@code pid} to the specified file. If java trace dumping
+     * fails, a native backtrace is attempted. Note that the timeout {@code timeoutMs} only applies
+     * to the java section of the trace, a further {@code NATIVE_DUMP_TIMEOUT_MS} might be spent
+     * attempting to obtain native traces in the case of a failure. Returns the total time spent
+     * capturing traces.
+     */
+    private static long dumpJavaTracesTombstoned(int pid, String fileName, long timeoutMs) {
+        final long timeStart = SystemClock.elapsedRealtime();
+        if (!Debug.dumpJavaBacktraceToFileTimeout(pid, fileName, (int) (timeoutMs / 1000))) {
+            Debug.dumpNativeBacktraceToFileTimeout(pid, fileName,
+                    (NATIVE_DUMP_TIMEOUT_MS / 1000));
+        }
+
+        return SystemClock.elapsedRealtime() - timeStart;
+    }
+</code></pre>
+
+<p>这里的逻辑主要还是两部分：</p>
+
+<p>&#8195;1. 使用Debug的dumpJavaBacktraceToFileTimeout方法来dump对应pid的栈信息，如果dump失败，则执行2步</p>
+
+<p>&#8195;2. 在第一步失败后，尝试调用Debug的dumpNativeBacktraceToFileTimeout方法来dump信息，尝试的最大时间为2s</p>
+
+<p>这个方法还是利用Debug类中的dumpNativeBacktraceToFileTimeout这个native方法去获取native stack的信息，并追加到我们的记录anr的日志文件后面，这个方法的具体定义如下：</p>
+
+<pre><code class="java">    /**
+     * Append the native stack traces of a given process to a specified file.
+     *
+     * @param pid pid to dump.
+     * @param file path of file to append dump to.
+     * @param timeoutSecs time to wait in seconds, or 0 to wait forever.
+     * @hide
+     */
+    public static native boolean dumpNativeBacktraceToFileTimeout(int pid, String file,
+                                                                  int timeoutSecs);
+</code></pre>
+
+<h4>dump栈信息总结</h4>
+
+<p>在dump栈信息的时候，过程分为：</p>
+
+<p>&#8195;1. 首先判断系统是否配置<code>dalvik.vm.stack-trace-dir</code>属性，如果没有配置，则利用FileObserver来监听全局默认的路径，也就是<code>/data/anr/traces.txt</code>，当发生anr时，会发送<strong>SIGNAL_QUIT</strong>信号，相当于执行了<code>adb shell kill -3 pid</code>，通知系统开始收集Java栈信息，然后写入到全局路径中。如果dump Java栈信息失败，则尝试通过Debug来dump native进程的栈信息，尝试的时间为2s。</p>
+
+<p>&#8195;2. 如果系统配置了<code>dalvik.vm.stack-trace-dir</code>属性，则会标志位useTombstonedForJavaTraces为true，表示使用Debug.dumpJavaBacktraceToFileTimeout方法来dump Java堆栈的信息。</p>
+
+<p>&#8195; 3. 如果上两个步骤完成后，20s钟时间还剩余，则开始dump 一些不是非常重要的native进程的堆栈信息</p>
+
+<p>&#8195; 4. 如果上面三个步骤完后后，20s钟时间还剩余，则开始dump  cpu tracker中所有的其他pid的栈信息(更加的底层)。</p>
+
+<h4>2.2 ProcessCpuTracker cpu信息的收集</h4>
+
+<p>主要是使用<code>printCurrentState</code>方法来收集每个进程的cpu的使用情况。具体看<strong><code>printCurrentState</code></strong>方法实现</p>
+
+<pre><code class="java">   final public String printCurrentState(long now) {
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+        buildWorkingProcs();
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new FastPrintWriter(sw, false, 1024);
+                //信息的头部
+        pw.print("CPU usage from ");
+            //判断是ANR前，还是ANR后
+        if (now &gt; mLastSampleTime) {
+            pw.print(now-mLastSampleTime);
+            pw.print("ms to ");
+            pw.print(now-mCurrentSampleTime);
+            pw.print("ms ago");
+        } else {
+            pw.print(mLastSampleTime-now);
+            pw.print("ms to ");
+            pw.print(mCurrentSampleTime-now);
+            pw.print("ms later");
+        }
+        pw.print(" (");
+        pw.print(sdf.format(new Date(mLastSampleWallTime)));
+        pw.print(" to ");
+        pw.print(sdf.format(new Date(mCurrentSampleWallTime)));
+        pw.print(")");
+
+        long sampleTime = mCurrentSampleTime - mLastSampleTime;
+        long sampleRealTime = mCurrentSampleRealTime - mLastSampleRealTime;
+        long percAwake = sampleRealTime &gt; 0 ? ((sampleTime*100) / sampleRealTime) : 0;
+        if (percAwake != 100) {
+            pw.print(" with ");
+            pw.print(percAwake);
+            pw.print("% awake");
+        }
+        pw.println(":");
+
+        final int totalTime = mRelUserTime + mRelSystemTime + mRelIoWaitTime
+                + mRelIrqTime + mRelSoftIrqTime + mRelIdleTime;
+
+        if (DEBUG) Slog.i(TAG, "totalTime " + totalTime + " over sample time "
+                + (mCurrentSampleTime-mLastSampleTime));
+
+        int N = mWorkingProcs.size();
+        for (int i=0; i&lt;N; i++) {
+            Stats st = mWorkingProcs.get(i);
+            printProcessCPU(pw, st.added ? " +" : (st.removed ? " -": "  "),
+                    st.pid, st.name, (int)st.rel_uptime,
+                    st.rel_utime, st.rel_stime, 0, 0, 0, st.rel_minfaults, st.rel_majfaults);
+            if (!st.removed &amp;&amp; st.workingThreads != null) {
+                int M = st.workingThreads.size();
+                for (int j=0; j&lt;M; j++) {
+                    Stats tst = st.workingThreads.get(j);
+                  //打印每个进程的信息
+                    printProcessCPU(pw,
+                            tst.added ? "   +" : (tst.removed ? "   -": "    "),
+                            tst.pid, tst.name, (int)st.rel_uptime,
+                            tst.rel_utime, tst.rel_stime, 0, 0, 0, 0, 0);
+                }
+            }
+        }
+                //答应total的信息，格式47% TOTAL: 31% user + 15% kernel + 0.2% softirq
+        printProcessCPU(pw, "", -1, "TOTAL", totalTime, mRelUserTime, mRelSystemTime,
+                mRelIoWaitTime, mRelIrqTime, mRelSoftIrqTime, 0, 0);
+
+        pw.flush();
+        return sw.toString();
+    }
+
+    private void printProcessCPU(PrintWriter pw, String prefix, int pid, String label,
+            int totalTime, int user, int system, int iowait, int irq, int softIrq,
+            int minFaults, int majFaults) {
+        pw.print(prefix);
+        if (totalTime == 0) totalTime = 1;
+        printRatio(pw, user+system+iowait+irq+softIrq, totalTime);
+        pw.print("% ");
+        if (pid &gt;= 0) {
+            pw.print(pid);
+            pw.print("/");
+        }
+        pw.print(label);
+        pw.print(": ");
+        printRatio(pw, user, totalTime);
+        pw.print("% user + ");
+        printRatio(pw, system, totalTime);
+        pw.print("% kernel");
+        if (iowait &gt; 0) {
+            pw.print(" + ");
+            printRatio(pw, iowait, totalTime);
+            pw.print("% iowait");
+        }
+        if (irq &gt; 0) {
+            pw.print(" + ");
+            printRatio(pw, irq, totalTime);
+            pw.print("% irq");
+        }
+        //https://www.kernel.org/doc/htmldocs/kernel-hacking/basics-softirqs.html
+        //softirq 
+        if (softIrq &gt; 0) {
+            pw.print(" + ");
+            printRatio(pw, softIrq, totalTime);
+            pw.print("% softirq");
+        }
+        if (minFaults &gt; 0 || majFaults &gt; 0) {
+            pw.print(" / faults:");
+            if (minFaults &gt; 0) {
+                pw.print(" ");
+                pw.print(minFaults);
+                pw.print(" minor");
+            }
+            if (majFaults &gt; 0) {
+                pw.print(" ");
+                pw.print(majFaults);
+                pw.print(" major");
+            }
+        }
+        pw.println();
+    }
+</code></pre>
+
+<p>这个方法就是打印每个进程，使用cpu的情况，完整的格式如下：</p>
+
+<pre><code class="java">CPU usage from 839843ms to 0ms ago (2019-04-18 18:35:53.827 to 2019-04-30 08:43:44.991):
+      4.5% 1638/system_server: 3% user + 1.4% kernel / faults: 22176 minor
+      2.2% 1387/adbd: 0.2% user + 2% kernel / faults: 49043 minor
+      0.8% 1401/android.hardware.graphics.composer@2.1-service: 0% user + 0.7% kernel / faults: 18 minor
+      ......
+</code></pre>
+
+<blockquote><p>注意这里有一个<strong>softirq</strong>的耗时的统计，那这个是什么呢？这个softirq是表示软中断的意思，主要是Linux 系统内核里面的程序，具体可以查看<a href="https://www.kernel.org/doc/htmldocs/kernel-hacking/basics-softirqs.html">https://www.kernel.org/doc/htmldocs/kernel-hacking/basics-softirqs.html</a></p></blockquote>
+
+<p><a href="https://www.cnblogs.com/CoderTian/p/5980426.html"></a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android系统之Watchdog学习解析]]></title>
