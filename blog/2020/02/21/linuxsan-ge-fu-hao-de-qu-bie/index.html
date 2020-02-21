@@ -5,11 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Octopress博客搭建与配置 - Lapisy的博客</title>
+  <title>Linux &,；,&&,||四个符号的区别 - Lapisy的博客</title>
   <meta name="author" content="Lapisy">
 
   
-  <meta name="description" content="一：Octopress安装下载 前期准备：http://octopress.org/docs/setup/ 注意：bundle install这必须到octopress源码里面去执行，否则会报错 基础配置：http://octopress.org/docs/configuring/ 注意事项 &hellip;">
+  <meta name="description" content="在Linux中经常用到几个命令一起连写的情况，基本上都会用到&amp;,; 或者 &amp;&amp;,那么这三个符号有什么区别呢？ 1
+1. command1 &amp; command2 &amp; command3 这个&amp;表示：三个命令同时执行 1
+2. command1; &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +20,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://blog.lapisy.com/blog/2019/04/20/octopressbo-ke-da-jian-yu-pei-zhi/">
+  <link rel="canonical" href="http://blog.lapisy.com/blog/2020/02/21/linuxsan-ge-fu-hao-de-qu-bie/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Lapisy的博客" type="application/atom+xml">
@@ -73,7 +75,7 @@
   
   <header>
     
-      <h1 class="entry-title">Octopress博客搭建与配置</h1>
+      <h1 class="entry-title">Linux &,；,&&,||四个符号的区别</h1>
     
     
       <p class="meta">
@@ -82,103 +84,47 @@
 
 
 
-<time class='entry-date' datetime='2019-04-20T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
+<time class='entry-date' datetime='2020-02-21T20:48:52+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2020</span></span> <span class='time'>8:48 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><h4>一：Octopress安装下载</h4>
-
-<p>前期准备：<a href="http://octopress.org/docs/setup/">http://octopress.org/docs/setup/</a></p>
-
-<blockquote><p>注意：<code>bundle install</code>这必须到octopress源码里面去执行，否则会报错</p></blockquote>
-
-<p>基础配置：<a href="http://octopress.org/docs/configuring/">http://octopress.org/docs/configuring/</a></p>
-
-<h4>注意事项</h4>
-
-<ul>
-<li>需要去掉twitter的所有</li>
-<li>去掉所有包含googleapis.com的连接</li>
-</ul>
-
-
-<!--more-->
-
-
-<h4>二：配置Github</h4>
-
-<p>1.配置ssh，首先执行<code>ssh-keygen -C github-account-email -t rsa</code>，生成公钥<br/>
-2.然后进入到.ssh中，把<code>id_rsa.pub</code>文件中的内容复制到github中的ssh key配置中<br/>
-3.使用<code>ssh -T git@github.com</code>测试是否配置成功，如果出现下面的类似的提示，表明成功</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>hi xxx! You’ve successfully authenticated, bug GitHub does not povide shell access</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li><p>登录 Github 后，新建repository。项目名称（Repository name）命名格式为 <code>username.github.io</code> ，username 是你的 Github 用户名。例如我的用户名是 Lapisy，所以输入 Lapisy.github.io 即可。点击 Create repository 创建。</p></li>
-<li><p>绑定本地的博客代码和github</p></li>
-</ol>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ cd octopress
-</span><span class='line'>$ rake setup_github_pages</span></code></pre></td></tr></table></div></figure>
-
-
-<p>提示输入repository的链接，你可以直接复制github中该repository的连接地址即可，例如我这里的是<code>https://github.com/Lapisy/Lapisy.github.io</code></p>
-
-<ol>
-<li>现在可以上传代码了</li>
-</ol>
-
+<div class="entry-content"><p>在Linux中经常用到几个命令一起连写的情况，基本上都会用到<code>&amp;</code>,<code>;</code> 或者 <code>&amp;&amp;</code>,那么这三个符号有什么区别呢？</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">rake</span> <span class="n">deploy</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>1. command1 <span class="err">&amp;</span> command2 <span class="err">&amp;</span> command3
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>三：添加导航栏</h4>
-
-<ol>
-<li>使用如下的命令创建页面,会在创建<code>source\名字\index.markdown</code>文件</li>
-</ol>
-
+<p>这个<code>&amp;</code>表示：三个命令同时执行</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">rake</span> <span class="n">new_page</span><span class="o">[</span><span class="s1">&#39;名字&#39;</span><span class="o">]</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>2. command1; command2; command3
 </span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>在<code>source\_includes\custom\navigation.html</code>中添加连接</li>
-</ol>
+<p>这个<code>;</code>表示：不管前面命令执行成功没有，后面的命令继续执行</p>
+
+<!-- more -->
 
 
-<h3>四：常用的命令</h3>
-
-<p>1.<code>rake new_post["文章名字"]</code></p>
-
-<blockquote><p><a href="http://octopress.org/docs/blogging/">Octopress创建文章的配置</a></p></blockquote>
-
-<ol>
-<li><p><code>rake genetate</code> 编译，生成public目录</p></li>
-<li><p><code>rake preview</code> 本地通过 <a href="http://localhost:4000">http://localhost:4000</a> 进行预览</p></li>
-</ol>
 
 
-<p>参考文章：<br/>
-<a href="https://www.jianshu.com/p/1a117ef0e534">https://www.jianshu.com/p/1a117ef0e534</a><br/>
-<a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">第三方主题</a><br/>
-<a href="https://www.jianshu.com/p/0ac2ac1a8e45">category配置</a><br>
-<a href="https://www.jianshu.com/p/fe0e089a985c">https://www.jianshu.com/p/fe0e089a985c</a></p>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>3. command1 <span class="err">&amp;&amp;</span> command2
+</span></code></pre></td></tr></table></div></figure>
 
-<!-- ![测试图片](/images/test.png) -->
 
+<p>这个<code>&amp;&amp;</code>表示：只有前面命令执行成功，后面命令才继续执行</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>command1 || command2
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个<code>||</code>表示：当command1执行失败后，执行command2</p>
 </div>
 
 
@@ -194,12 +140,12 @@
 
 
 
-<time class='entry-date' datetime='2019-04-20T20:43:48+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>8:43 pm</span></time>
+<time class='entry-date' datetime='2020-02-21T20:48:52+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2020</span></span> <span class='time'>8:48 pm</span></time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/octopress/'>octopress</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>
   
 </span>
 
@@ -215,8 +161,8 @@
     
     <p class="meta">
       
+        <a class="basic-alignment left" href="/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/" title="Previous Post: Android资源框架-主题Theme和Style">&laquo; Android资源框架-主题Theme和Style</a>
       
-        <a class="basic-alignment right" href="/blog/2019/04/21/androidzhi-wen-jian-shang-chuan-yuan-li/" title="Next Post: Android之文件上传原理">Android之文件上传原理 &raquo;</a>
       
     </p>
   </footer>

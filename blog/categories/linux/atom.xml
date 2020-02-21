@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Linux | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2020-02-21T21:01:26+08:00</updated>
+  <updated>2020-02-21T21:06:50+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -14,18 +14,18 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Linux & ； && || 三个符号的区别]]></title>
+    <title type="html"><![CDATA[Linux &,；,&&,||四个符号的区别]]></title>
     <link href="http://blog.lapisy.com/blog/2020/02/21/linuxsan-ge-fu-hao-de-qu-bie/"/>
     <updated>2020-02-21T20:48:52+08:00</updated>
     <id>http://blog.lapisy.com/blog/2020/02/21/linuxsan-ge-fu-hao-de-qu-bie</id>
     <content type="html"><![CDATA[<p>在Linux中经常用到几个命令一起连写的情况，基本上都会用到<code>&amp;</code>,<code>;</code> 或者 <code>&amp;&amp;</code>,那么这三个符号有什么区别呢？</p>
 
-<pre><code class="shell">1. command1 &amp; command2 &amp; command3
+<pre><code class="xml">1. command1 &amp; command2 &amp; command3
 </code></pre>
 
 <p>这个<code>&amp;</code>表示：三个命令同时执行</p>
 
-<pre><code class="shell">2. command1; command2; command3
+<pre><code class="xml">2. command1; command2; command3
 </code></pre>
 
 <p>这个<code>;</code>表示：不管前面命令执行成功没有，后面的命令继续执行</p>
@@ -33,12 +33,12 @@
 <!-- more -->
 
 
-<pre><code class="shell">3. command1 &amp;&amp; command2
+<pre><code class="xml">3. command1 &amp;&amp; command2
 </code></pre>
 
 <p>这个<code>&amp;&amp;</code>表示：只有前面命令执行成功，后面命令才继续执行</p>
 
-<pre><code class="shell">command1 || command2
+<pre><code class="xml">command1 || command2
 </code></pre>
 
 <p>这个<code>||</code>表示：当command1执行失败后，执行command2</p>
