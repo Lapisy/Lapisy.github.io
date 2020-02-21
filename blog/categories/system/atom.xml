@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: System | Lapisy的博客]]></title>
+  <link href="http://blog.lapisy.com/blog/categories/system/atom.xml" rel="self"/>
+  <link href="http://blog.lapisy.com/"/>
+  <updated>2020-02-21T11:16:39+08:00</updated>
+  <id>http://blog.lapisy.com/</id>
+  <author>
+    <name><![CDATA[Lapisy]]></name>
+    <email><![CDATA[softgeek@163.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android资源框架-主题Theme和Style]]></title>
+    <link href="http://blog.lapisy.com/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/"/>
+    <updated>2020-02-21T10:49:37+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style</id>
+    <content type="html"><![CDATA[<!--more-->
+
+]]></content>
+  </entry>
+  
+</feed>

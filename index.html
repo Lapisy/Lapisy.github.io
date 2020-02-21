@@ -9,7 +9,7 @@
   <meta name="author" content="Lapisy">
 
   
-  <meta name="description" content="文章所有的源码都是基于SDK-28的版本，也就是Android P的版本 一：概述 我们在解决ANR异常时，一般是利用打印出来的anr log，还有就是发生ANR的栈信息。一般情况下解决ANR步骤为： &#8195;1. 先利用main log来查看ANR发生的原因， &hellip;">
+  <meta name="description" content="">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +69,154 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/">Android资源框架-主题Theme和Style</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2020-02-21T10:49:37+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2020</span></span> <span class='time'>10:49 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"></div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/">Read More &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2019/05/12/vs-codeshi-yong-zong-jie/">VisualStudio Code使用总结</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2019-05-12T09:16:08+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>9:16 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3>常用的设置</h3>
+
+<h4>1. 关闭右侧预览</h4>
+
+<p>搜索<code>editor.minimap.enabled</code>，可以控制是否关闭地图</p>
+
+<h4>2. 关闭预览模式</h4>
+
+<p>预览模式会导致打开的文件都会重用一个tab，<code>enable preview</code>，可以控制关闭和打开</p>
+
+<h3>快捷键</h3>
+
+<h4>1. 搜索文件</h4>
+
+<p><code>ctrol+p</code>或者<code>command+p</code></p>
+
+<h4>2. 搜索内容</h4>
+
+<p><code>ctorl+shfit+f</code></p>
+
+<h4>3. 打开面板</h4>
+
+<p><code>shift + command + p</code></p>
+
+<h3>常用插件</h3>
+
+<h4>1. Markdown预览插件</h4>
+
+<p>自己喜欢Github的MarkDown渲染模式，简介大方，因此下载了<a href="https://marketplace.visualstudio.com/items?itemName=bierner.markdown-preview-github-styles">Markdown Preview Github Styling</a></p>
+
+<h3>参考</h3>
+
+<p><a href="https://juejin.im/post/5c45b92751882525487c5c66">在 vscode 中写 Markdown 如何装X</a></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/">Android系统工具之Systrace介绍和使用</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2019-04-30T11:16:25+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2019</span></span> <span class='time'>11:16 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3>一：概述</h3>
+
+<p>&#8195;1. 什么是Systrace？</p>
+
+<p>&#8195;2. Systrace具体使用方式？</p>
+
+<p>&#8195;3. Systrace的实际应用？</p>
+
+<h3>二：Systrace的使用</h3>
+
+<h4>2.1 生成trace.html文件</h4>
+
+<p>如何抓取trace.html有两种方式，一种是通过命令行的方式，一种是通过命令行的方式</p>
+
+<h5>2.1.1 命令行抓取</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">python</span> <span class="n">systrace</span><span class="o">.</span><span class="na">py</span> <span class="o">[</span><span class="n">options</span><span class="o">]</span> <span class="o">[</span><span class="n">categories</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中，<code>[options]</code> 是一些命令参数，<code>[category]</code> 等是你感兴趣的系统模块，比如view代表view系统（包含绘制流程），am代表ActivityManager（包含Activity创建过程等）；分析不同问题的时候，可以选择不同你感兴趣的模块。需要重复的是，尽可能缩小需要Trace的模块，其一是数据量小易与分析；其二，虽然systrace本身开销很小，但是缩小需要Trace的模块也能减少运行时开销。比如你分析卡顿的时候，<code>power</code>, <code>webview</code> 就几乎是无用的。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/">Read More &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -346,6 +494,18 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/">Android资源框架-主题Theme和Style</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2019/05/12/vs-codeshi-yong-zong-jie/">VisualStudio Code使用总结</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/">Android系统工具之Systrace介绍和使用</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/">Android系统之ANR日志收集过程-Java层</a>
       </li>
     
@@ -365,7 +525,7 @@
 </section>
 <section>
     <h1>Categories</h1>
-      <ul id="category-list"><li><a href='/blog/categories/android/'>android (3)</a></li><li><a href='/blog/categories/framework/'>framework (2)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
+      <ul id="category-list"><li><a href='/blog/categories/android/'>android (3)</a></li><li><a href='/blog/categories/framework/'>framework (4)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/system/'>system (1)</a></li><li><a href='/blog/categories/systrace/'>systrace (1)</a></li><li><a href='/blog/categories/visual-code/'>visual code (1)</a></li><li><a href='/blog/categories/gong-ju/'>工具 (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
   </section>
 
 
@@ -377,7 +537,7 @@
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2019 - Lapisy -
+  Copyright &copy; 2020 - Lapisy -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

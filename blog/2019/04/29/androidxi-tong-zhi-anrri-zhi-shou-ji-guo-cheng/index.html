@@ -1175,7 +1175,7 @@
 
 <p>从上面可以看出，如果配置了<code>dalvik.vm.stack-trace-dir</code>，则存储anr栈信息的文件名称为变为了</p>
 
-<p><strong>tracesDir+&ldquo;tracesDir&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
+<p><strong>tracesDir+&ldquo;anr_&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
 
 <p>进一步调用AMS的dumpStackTraces方法，如下：</p>
 
@@ -1879,6 +1879,8 @@
         <a class="basic-alignment left" href="/blog/2019/04/23/androidxi-tong-zhi-watchdogxue-xi-jie-xi/" title="Previous Post: Android系统之Watchdog学习解析">&laquo; Android系统之Watchdog学习解析</a>
       
       
+        <a class="basic-alignment right" href="/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/" title="Next Post: Android系统工具之Systrace介绍和使用">Android系统工具之Systrace介绍和使用 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -1890,6 +1892,18 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/">Android资源框架-主题Theme和Style</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2019/05/12/vs-codeshi-yong-zong-jie/">VisualStudio Code使用总结</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/">Android系统工具之Systrace介绍和使用</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/">Android系统之ANR日志收集过程-Java层</a>
@@ -1911,7 +1925,7 @@
 </section>
 <section>
     <h1>Categories</h1>
-      <ul id="category-list"><li><a href='/blog/categories/android/'>android (3)</a></li><li><a href='/blog/categories/framework/'>framework (2)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
+      <ul id="category-list"><li><a href='/blog/categories/android/'>android (3)</a></li><li><a href='/blog/categories/framework/'>framework (4)</a></li><li><a href='/blog/categories/octopress/'>octopress (1)</a></li><li><a href='/blog/categories/system/'>system (1)</a></li><li><a href='/blog/categories/systrace/'>systrace (1)</a></li><li><a href='/blog/categories/visual-code/'>visual code (1)</a></li><li><a href='/blog/categories/gong-ju/'>工具 (1)</a></li><li><a href='/blog/categories/wang-luo-shang-chuan-yuan-li/'>网络上传原理 (1)</a></li></ul>
   </section>
 
 
@@ -1924,7 +1938,7 @@
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2019 - Lapisy -
+  Copyright &copy; 2020 - Lapisy -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

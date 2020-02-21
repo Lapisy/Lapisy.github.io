@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Visual Code | Lapisy的博客]]></title>
+  <link href="http://blog.lapisy.com/blog/categories/visual-code/atom.xml" rel="self"/>
+  <link href="http://blog.lapisy.com/"/>
+  <updated>2020-02-21T11:16:39+08:00</updated>
+  <id>http://blog.lapisy.com/</id>
+  <author>
+    <name><![CDATA[Lapisy]]></name>
+    <email><![CDATA[softgeek@163.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[VisualStudio Code使用总结]]></title>
+    <link href="http://blog.lapisy.com/blog/2019/05/12/vs-codeshi-yong-zong-jie/"/>
+    <updated>2019-05-12T09:16:08+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/05/12/vs-codeshi-yong-zong-jie</id>
+    <content type="html"><![CDATA[<h3>常用的设置</h3>
+
+<h4>1. 关闭右侧预览</h4>
+
+<p>搜索<code>editor.minimap.enabled</code>，可以控制是否关闭地图</p>
+
+<h4>2. 关闭预览模式</h4>
+
+<p>预览模式会导致打开的文件都会重用一个tab，<code>enable preview</code>，可以控制关闭和打开</p>
+
+<h3>快捷键</h3>
+
+<h4>1. 搜索文件</h4>
+
+<p><code>ctrol+p</code>或者<code>command+p</code></p>
+
+<h4>2. 搜索内容</h4>
+
+<p><code>ctorl+shfit+f</code></p>
+
+<h4>3. 打开面板</h4>
+
+<p><code>shift + command + p</code></p>
+
+<h3>常用插件</h3>
+
+<h4>1. Markdown预览插件</h4>
+
+<p>自己喜欢Github的MarkDown渲染模式，简介大方，因此下载了<a href="https://marketplace.visualstudio.com/items?itemName=bierner.markdown-preview-github-styles">Markdown Preview Github Styling</a></p>
+
+<h3>参考</h3>
+
+<p><a href="https://juejin.im/post/5c45b92751882525487c5c66">在 vscode 中写 Markdown 如何装X</a></p>
+]]></content>
+  </entry>
+  
+</feed>

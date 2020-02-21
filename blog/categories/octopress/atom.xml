@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-30T10:51:52+08:00</updated>
+  <updated>2020-02-21T11:16:39+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -82,6 +82,12 @@ rake new_page['名字']
 <p>1.<code>rake new_post["文章名字"]</code></p>
 
 <blockquote><p><a href="http://octopress.org/docs/blogging/">Octopress创建文章的配置</a></p></blockquote>
+
+<ol>
+<li><p><code>rake genetate</code> 编译，生成public目录</p></li>
+<li><p><code>rake preview</code> 本地通过 <a href="http://localhost:4000">http://localhost:4000</a> 进行预览</p></li>
+</ol>
+
 
 <p>参考文章：<br/>
 <a href="https://www.jianshu.com/p/1a117ef0e534">https://www.jianshu.com/p/1a117ef0e534</a><br/>

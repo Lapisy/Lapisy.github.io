@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>http://blog.lapisy.com/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/</loc>
+<lastmod>2020-02-21T10:49:37+08:00</lastmod>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/2019/05/12/vs-codeshi-yong-zong-jie/</loc>
+<lastmod>2019-05-12T09:16:08+08:00</lastmod>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/</loc>
+<lastmod>2019-04-30T11:16:25+08:00</lastmod>
+</url>
+<url>
 <loc>http://blog.lapisy.com/blog/2019/04/29/androidxi-tong-zhi-anrri-zhi-shou-ji-guo-cheng/</loc>
 <lastmod>2019-04-29T22:24:59+08:00</lastmod>
 </url>
@@ -36,5 +48,17 @@
 </url>
 <url>
 <loc>http://blog.lapisy.com/blog/categories/framework/</loc>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/categories/systrace/</loc>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/categories/gong-ju/</loc>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/categories/visual-code/</loc>
+</url>
+<url>
+<loc>http://blog.lapisy.com/blog/categories/system/</loc>
 </url>
 </urlset>

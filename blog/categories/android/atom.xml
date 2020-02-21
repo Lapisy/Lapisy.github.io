@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-30T10:51:52+08:00</updated>
+  <updated>2020-02-21T11:16:39+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -582,7 +582,7 @@ DALVIK THREADS (16):
 
 <p>从上面可以看出，如果配置了<code>dalvik.vm.stack-trace-dir</code>，则存储anr栈信息的文件名称为变为了</p>
 
-<p><strong>tracesDir+&ldquo;tracesDir&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
+<p><strong>tracesDir+&ldquo;anr_&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
 
 <p>进一步调用AMS的dumpStackTraces方法，如下：</p>
 

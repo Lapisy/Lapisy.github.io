@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Framework | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/framework/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2019-04-30T10:51:52+08:00</updated>
+  <updated>2020-02-21T11:16:39+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -12,6 +12,150 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Android资源框架-主题Theme和Style]]></title>
+    <link href="http://blog.lapisy.com/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style/"/>
+    <updated>2020-02-21T10:49:37+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2020/02/21/androidzi-yuan-kuang-jia-zhu-ti-themehe-style</id>
+    <content type="html"><![CDATA[<!--more-->
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android系统工具之Systrace介绍和使用]]></title>
+    <link href="http://blog.lapisy.com/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong/"/>
+    <updated>2019-04-30T11:16:25+08:00</updated>
+    <id>http://blog.lapisy.com/blog/2019/04/30/androidxi-tong-gong-ju-zhi-systracejie-shao-he-shi-yong</id>
+    <content type="html"><![CDATA[<h3>一：概述</h3>
+
+<p>&#8195;1. 什么是Systrace？</p>
+
+<p>&#8195;2. Systrace具体使用方式？</p>
+
+<p>&#8195;3. Systrace的实际应用？</p>
+
+<h3>二：Systrace的使用</h3>
+
+<h4>2.1 生成trace.html文件</h4>
+
+<p>如何抓取trace.html有两种方式，一种是通过命令行的方式，一种是通过命令行的方式</p>
+
+<h5>2.1.1 命令行抓取</h5>
+
+<pre><code class="java">python systrace.py [options] [categories]
+</code></pre>
+
+<p>其中，<code>[options]</code> 是一些命令参数，<code>[category]</code> 等是你感兴趣的系统模块，比如view代表view系统（包含绘制流程），am代表ActivityManager（包含Activity创建过程等）；分析不同问题的时候，可以选择不同你感兴趣的模块。需要重复的是，尽可能缩小需要Trace的模块，其一是数据量小易与分析；其二，虽然systrace本身开销很小，但是缩小需要Trace的模块也能减少运行时开销。比如你分析卡顿的时候，<code>power</code>, <code>webview</code> 就几乎是无用的。</p>
+
+<!--more-->
+
+
+<p><code>[option]</code> 中比较重要的几个参数如下：</p>
+
+<ul>
+<li><strong>-a <package_name></strong>：这个选项可以开启指定包名App中自定义Trace Label的Trace功能。也就是说，如果你在代码中使用了<code>Trace.beginSection("tag")</code>, <code>Trace.endSection</code>；默认情况下，你的这些代码是不会生效的，因此，这个选项一定要开启！</li>
+<li><strong>-t N</strong>：用来指定Trace运行的时间，取决于你需要分析过程的时间；还是那句话，在需要的时候尽可能缩小时间；当然，绝对不要把时间设的太短导致你操作没完Trace就跑完了，这样会出现<code>Did not finish</code> 的标签，分析数据就基本无效了。</li>
+<li><strong>-l</strong>：这个用来列出你分析的那个手机系统支持的Trace模块；也就是上面命令中 <code>[category1]</code>能使用的部分；不同版本的系统能支持的模块是不同的，一般来说，高版本的支持的模块更多。</li>
+<li><strong>-o FILE</strong>：指定trace数据文件的输出路径，如果不指定就是当前目录的<code>trace.html</code>。</li>
+</ul>
+
+
+<p><strong><code>systrace.py -l</code></strong> 可以输出手机能支持的Trace模块，而且输出还给出了此模块的用途；常用的模块如下：</p>
+
+<ul>
+<li><code>sched</code>: CPU调度的信息，非常重要；你能看到CPU在每个时间段在运行什么线程；线程调度情况，比如锁信息。</li>
+<li><code>gfx</code>：Graphic系统的相关信息，包括SerfaceFlinger，VSYNC消息，Texture，RenderThread等；分析卡顿非常依赖这个。</li>
+<li><code>view</code>: View绘制系统的相关信息，比如onMeasure，onLayout等；对分析卡顿比较有帮助。</li>
+<li><code>am</code>：ActivityManager调用的相关信息；用来分析Activity的启动过程比较有效。</li>
+<li><code>dalvik</code>: 虚拟机相关信息，比如GC停顿等。</li>
+<li><code>binder_driver</code>: Binder驱动的相关信息，如果你怀疑是Binder IPC的问题，不妨打开这个。</li>
+<li><code>core_services</code>: SystemServer中系统核心Service的相关信息，分析特定问题用。</li>
+</ul>
+
+
+<p>具体的例子如：</p>
+
+<pre><code class="java">python systrace.py -t 10 -o mynewtrace.html sched freq idle am wm gfx view \
+    binder_driver hal dalvik camera input res -a &lt;package-name&gt;
+</code></pre>
+
+<h5>2.1.2 图形界面抓取</h5>
+
+<p>这个挺简单的，就是在Android device monitor上面来抓取，具体可以参考<a href="https://www.jianshu.com/p/0670fe8507ff">这篇文章</a>。</p>
+
+<blockquote><p> 注意：Android device monitor在高版本中，没有集成在AndroidStudio中，可以去sdk里面的tools文件下面找到这个运行的工具</p></blockquote>
+
+<h4>2.2 自定义获取的位置</h4>
+
+<p>如果我们不自己定义一些标签，那么加载出来的都是系统内置的一些section，那么我们是否可以自己来定义一些开始和结束的位置呢？肯定是可以的，我们可以通过如下的方式来定义开始和结束的位置：</p>
+
+<pre><code class="java">    private void beginTrace(String name){
+        //有一定的版本要求
+        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            Trace.beginSection(name);
+        }
+    }
+
+    private void endTrace(){
+        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            Trace.endSection();
+        }
+    }
+</code></pre>
+
+<p>这里的<code>beginSection</code>和<code>endSection</code>都是成对出现的，也是成对匹配的，使用过程中注意。加入添加了一个<strong>MainActivity_init</strong>的trace，那么生成的结果为：</p>
+
+<p><img src="/images/systrace-1.png" alt="systrace-1" /></p>
+
+<blockquote><p>这里需要注意的地方是，<code>beginSection</code>和<code>endSection</code>必须在同一个线程中，否则抓取不到。</p></blockquote>
+
+<h4>2.3 分析trace.html文件</h4>
+
+<p>如何见上面生成的trace.html打开呢？有的人是直接点击浏览器，用chrome打开，但是有的时候会出现问题，比如卡顿，报错等，正确的打开方式是：</p>
+
+<p>&#8195;1. 在在chrome地址栏中输入<strong>chrome:tracing</strong>，会加载出分析trace.html的框架；</p>
+
+<p>&#8195;2. 点击load按钮加载制定地址的trace.html文件；</p>
+
+<p>那么如何分析trace.html这个文件呢？</p>
+
+<table>
+<thead>
+<tr>
+<th> 名词          </th>
+<th> 解释                              </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> Wall Duration </td>
+<td> 代表着这一区块的开始到结束的耗时  </td>
+</tr>
+<tr>
+<td> CPU Duration  </td>
+<td> 实际CPU在处理这一区块所消耗的时间 </td>
+</tr>
+<tr>
+<td> Self Time     </td>
+<td> 自身方法耗时（不包含其调用方法）  </td>
+</tr>
+<tr>
+<td> CPU Self Time </td>
+<td> 自身方法cpu执行时间               </td>
+</tr>
+</tbody>
+</table>
+
+
+<h4>参考：</h4>
+
+<p><a href="https://developer.android.com/studio/command-line/systrace">点击查看官方介绍</a></p>
+
+<p><a href="[http://gityuan.com/2016/01/17/systrace/](http://gityuan.com/2016/01/17/systrace/">快捷键操作具体介绍</a>)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android系统之ANR日志收集过程-Java层]]></title>
@@ -582,7 +726,7 @@ DALVIK THREADS (16):
 
 <p>从上面可以看出，如果配置了<code>dalvik.vm.stack-trace-dir</code>，则存储anr栈信息的文件名称为变为了</p>
 
-<p><strong>tracesDir+&ldquo;tracesDir&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
+<p><strong>tracesDir+&ldquo;anr_&rdquo;+&ldquo;yyyy-MM-dd-HH-mm-ss-SSS&rdquo;</strong>这种命名风格，华为的手机默认就是这种。</p>
 
 <p>进一步调用AMS的dumpStackTraces方法，如下：</p>
 
