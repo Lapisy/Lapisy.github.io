@@ -4,7 +4,7 @@
   <title><![CDATA[Category: 生活 | Lapisy的博客]]></title>
   <link href="http://blog.lapisy.com/blog/categories/sheng-huo/atom.xml" rel="self"/>
   <link href="http://blog.lapisy.com/"/>
-  <updated>2020-02-21T17:35:53+08:00</updated>
+  <updated>2020-02-21T17:46:09+08:00</updated>
   <id>http://blog.lapisy.com/</id>
   <author>
     <name><![CDATA[Lapisy]]></name>
@@ -37,6 +37,9 @@
 <li>APM平台，涉及到的ASM，编译打包过程，AOP编程等</li>
 <li>能最后形成一个sdk能够统计一个APP的整体性能，结合目前市面是已经有的工具</li>
 </ul>
+
+
+<!-- more -->
 
 
 <h4>2. 深入学习PMS/AMS</h4>
